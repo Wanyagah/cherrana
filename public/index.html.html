@@ -3,178 +3,606 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Payment App</title>
+    <title>Secure Payment Processing</title>
     <script src="https://js.stripe.com/v3/"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
-        button {
-            background-color: #6772E5;
-            color: white;
-            padding: 12px 15px;
-            border: none;
-            border-radius: 4px;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             width: 100%;
+            max-width: 500px;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::before {
+            content: '•';
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
             font-size: 16px;
-            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
         }
-        button:hover {
-            background-color: #5469D4;
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        #card-element {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+
+        input.error, select.error {
+            border-color: #e53e3e;
+            box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
         }
-        .message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
+
+        .error-message {
+            color: #e53e3e;
+            font-size: 12px;
+            margin-top: 5px;
             display: none;
         }
-        .success {
-            background-color: #D4EDDA;
-            color: #155724;
-            border: 1px solid #C3E6CB;
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
-        .error {
-            background-color: #F8D7DA;
-            color: #721C24;
-            border: 1px solid #F5C6CB;
+
+        .pay-button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .pay-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .pay-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .payment-status {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        .payment-status.success {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            color: #2f855a;
+        }
+
+        .payment-status.error {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            color: #c53030;
+        }
+
+        .payment-status.processing {
+            background: #fffaf0;
+            border: 1px solid #faf089;
+            color: #b7791f;
+        }
+
+        .status-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        .status-message {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .status-details {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .required::after {
+            content: ' *';
+            color: #e53e3e;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Make a Payment</h2>
+        <h1>Secure Payment</h1>
         
-        <form id="payment-form">
-            <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" id="name" placeholder="John Doe" required>
+        <form id="paymentForm">
+            <!-- Billing Address Section -->
+            <div class="form-section">
+                <div class="section-title">Billing Address</div>
+                
+                <div class="form-group">
+                    <label for="street" class="required">Street Address</label>
+                    <input type="text" id="street" placeholder="123 Main St" required>
+                    <div class="error-message" id="street-error">Please enter your street address</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="street2">Apartment, Suite, etc. (Optional)</label>
+                    <input type="text" id="street2" placeholder="Apt 4B">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city" class="required">City</label>
+                        <input type="text" id="city" placeholder="New York" required>
+                        <div class="error-message" id="city-error">Please enter your city</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="zip" class="required">ZIP Code</label>
+                        <input type="text" id="zip" placeholder="10001" required>
+                        <div class="error-message" id="zip-error">Please enter your ZIP code</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="state" class="required">State</label>
+                        <input type="text" id="state" placeholder="NY" required>
+                        <div class="error-message" id="state-error">Please enter your state</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="country" class="required">Country</label>
+                        <select id="country" required>
+                            <option value="">Select Country</option>
+                            <option value="US">United States</option>
+                            <option value="CA">Canada</option>
+                            <option value="GB">United Kingdom</option>
+                            <option value="AU">Australia</option>
+                            <option value="DE">Germany</option>
+                            <option value="FR">France</option>
+                            <option value="JP">Japan</option>
+                            <!-- More countries will be loaded dynamically -->
+                        </select>
+                        <div class="error-message" id="country-error">Please select your country</div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" placeholder="john@example.com" required>
+
+            <!-- Payment Details Section -->
+            <div class="form-section">
+                <div class="section-title">Payment Details</div>
+                
+                <div class="form-group">
+                    <label for="amount" class="required">Amount ($)</label>
+                    <input type="number" id="amount" min="0.01" step="0.01" placeholder="0.00" value="0.05" required>
+                    <div class="error-message" id="amount-error">Please enter a valid amount</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cardNumber" class="required">Card Number</label>
+                    <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" required>
+                    <div class="error-message" id="cardNumber-error">Please enter a valid card number</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="expiry" class="required">Expiry (MM/YY)</label>
+                        <input type="text" id="expiry" placeholder="MM/YY" required>
+                        <div class="error-message" id="expiry-error">Please enter valid expiry date</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cvc" class="required">CVC</label>
+                        <input type="text" id="cvc" placeholder="123" required>
+                        <div class="error-message" id="cvc-error">Please enter valid CVC</div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label for="amount">Amount (USD)</label>
-                <input type="number" id="amount" placeholder="10.00" min="1" step="0.01" required>
-            </div>
-            
-            <div class="form-group">
-                <label>Card Details</label>
-                <div id="card-element"></div>
-            </div>
-            
-            <button type="submit">Pay Now</button>
+
+            <button type="button" id="pay-button" class="pay-button">
+                <span id="button-text">Pay Now</span>
+                <span id="button-loading" style="display: none;">
+                    <span class="loading-spinner"></span> Processing...
+                </span>
+            </button>
         </form>
-        
-        <div id="success-message" class="message success"></div>
-        <div id="error-message" class="message error"></div>
+
+        <div id="payment-status" class="payment-status">
+            <div class="status-icon">✅</div>
+            <div class="status-message"></div>
+            <div class="status-details"></div>
+        </div>
     </div>
 
     <script>
-        // Replace with your Stripe publishable key
-        const stripe = Stripe('pk_live_51R2yuLFKJ2Qtcy9Lf5eA50tPeQdQYMuDhi5E9ur0qWggBg4lqD0ikQgbWEyHsTg9LNtlLx4yKpzEBDY9pZCRR3wx00eCaGkuVa');
-        const elements = stripe.elements();
-        const cardElement = elements.create('card');
-        cardElement.mount('#card-element');
-        
-        const form = document.getElementById('payment-form');
-        const successMessage = document.getElementById('success-message');
-        const errorMessage = document.getElementById('error-message');
-        
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
+        // Configuration
+        const BACKEND_URL = 'https://your-app-name.onrender.com'; // Replace with your Render URL
+        const STRIPE_PUBLISHABLE_KEY = 'pk_live_your_actual_key_here'; // Replace with your live key
+
+        // Initialize Stripe
+        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+
+        // DOM Elements
+        const payButton = document.getElementById('pay-button');
+        const buttonText = document.getElementById('button-text');
+        const buttonLoading = document.getElementById('button-loading');
+        const paymentStatus = document.getElementById('payment-status');
+        const statusMessage = paymentStatus.querySelector('.status-message');
+        const statusDetails = paymentStatus.querySelector('.status-details');
+        const statusIcon = paymentStatus.querySelector('.status-icon');
+
+        // Country data (simplified for demo - load full list from API in production)
+        const countries = {
+            'US': 'United States', 'CA': 'Canada', 'GB': 'United Kingdom', 'AU': 'Australia',
+            'DE': 'Germany', 'FR': 'France', 'JP': 'Japan', 'BR': 'Brazil', 'IN': 'India',
+            'CN': 'China', 'RU': 'Russia', 'MX': 'Mexico', 'IT': 'Italy', 'ES': 'Spain'
+        };
+
+        // Populate country dropdown
+        const countrySelect = document.getElementById('country');
+        Object.entries(countries).forEach(([code, name]) => {
+            const option = document.createElement('option');
+            option.value = code;
+            option.textContent = name;
+            countrySelect.appendChild(option);
+        });
+
+        // Input formatting and validation
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{4})/g, '$1 ').trim();
+            e.target.value = value.substring(0, 19);
+            validateCardNumber(value.replace(/\s/g, ''));
+        });
+
+        document.getElementById('expiry').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value.substring(0, 5);
+            validateExpiry(value);
+        });
+
+        document.getElementById('cvc').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+            validateCVC(e.target.value);
+        });
+
+        document.getElementById('zip').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/[^a-zA-Z0-9\- ]/g, '').substring(0, 10);
+        });
+
+        // Validation functions
+        function validateCardNumber(number) {
+            const cleanNumber = number.replace(/\s/g, '');
+            const isValid = cleanNumber.length >= 13 && cleanNumber.length <= 19 && /^\d+$/.test(cleanNumber);
+            toggleError('cardNumber', !isValid);
+            return isValid;
+        }
+
+        function validateExpiry(expiry) {
+            const [month, year] = expiry.split('/');
+            const currentYear = new Date().getFullYear() % 100;
+            const currentMonth = new Date().getMonth() + 1;
             
-            // Show loading state
-            const submitButton = form.querySelector('button');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Processing...';
+            const isValid = month && year && 
+                          parseInt(month) >= 1 && parseInt(month) <= 12 &&
+                          parseInt(year) >= currentYear &&
+                          (parseInt(year) > currentYear || parseInt(month) >= currentMonth);
             
-            // Hide previous messages
-            successMessage.style.display = 'none';
-            errorMessage.style.display = 'none';
+            toggleError('expiry', !isValid);
+            return isValid;
+        }
+
+        function validateCVC(cvc) {
+            const isValid = cvc.length >= 3 && cvc.length <= 4 && /^\d+$/.test(cvc);
+            toggleError('cvc', !isValid);
+            return isValid;
+        }
+
+        function toggleError(fieldId, showError) {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(fieldId + '-error');
             
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const amount = document.getElementById('amount').value;
-            
-            try {
-                // Create payment intent on server
-                const response = await fetch('/create-payment-intent', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        amount: Math.round(amount * 100), // Convert to cents
-                        currency: 'usd',
-                        name: name,
-                        email: email
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
+            if (showError) {
+                field.classList.add('error');
+                error.style.display = 'block';
+            } else {
+                field.classList.remove('error');
+                error.style.display = 'none';
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+
+            // Validate required fields
+            const requiredFields = ['street', 'city', 'zip', 'state', 'country', 'amount', 'cardNumber', 'expiry', 'cvc'];
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field);
+                if (!element.value.trim()) {
+                    toggleError(field, true);
+                    isValid = false;
                 }
+            });
+
+            // Validate specific fields
+            if (!validateCardNumber(document.getElementById('cardNumber').value)) isValid = false;
+            if (!validateExpiry(document.getElementById('expiry').value)) isValid = false;
+            if (!validateCVC(document.getElementById('cvc').value)) isValid = false;
+
+            return isValid;
+        }
+
+        // Payment processing
+        payButton.addEventListener('click', async function() {
+            if (!validateForm()) {
+                showStatus('error', 'Please fix the errors in the form', 'Check all required fields and try again');
+                return;
+            }
+
+            setLoading(true);
+            showStatus('processing', 'Creating payment...', '');
+
+            try {
+                // Step 1: Create payment intent
+                const paymentIntent = await createPaymentIntent();
                 
-                // Confirm card payment
-                const result = await stripe.confirmCardPayment(data.clientSecret, {
-                    payment_method: {
-                        card: cardElement,
-                        billing_details: {
-                            name: name,
-                            email: email
-                        }
-                    }
-                });
+                // Step 2: Confirm payment with card details
+                const result = await confirmPayment(paymentIntent.paymentIntentId);
                 
-                if (result.error) {
-                    throw new Error(result.error.message);
+                if (result.requiresAction) {
+                    // Handle 3D Secure authentication
+                    await handle3DSecure(result.clientSecret);
+                } else if (result.status === 'succeeded') {
+                    showStatus('success', 'Payment Successful!', `Transaction ID: ${paymentIntent.paymentIntentId}`);
+                    resetForm();
                 } else {
-                    // Success
-                    successMessage.textContent = 'Payment successful! Thank you.
-                    successMessage.style.display = 'block';
-                    form.reset();
+                    showStatus('processing', 'Payment Processing...', 'Your payment is being processed');
+                }
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                showStatus('error', 'Payment Failed', error.message || 'Please try again');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        async function createPaymentIntent() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            
+            const response = await fetch(`${BACKEND_URL}/create-payment-intent`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    amount: amount,
+                    currency: 'usd'
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to create payment');
+            }
+
+            return await response.json();
+        }
+
+        async function confirmPayment(paymentIntentId) {
+            const billingAddress = {
+                street: document.getElementById('street').value,
+                street2: document.getElementById('street2').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                zip: document.getElementById('zip').value,
+                country: document.getElementById('country').value,
+                name: 'Cardholder', // You can add a name field if needed
+                email: '' // You can add an email field if needed
+            };
+
+            const response = await fetch(`${BACKEND_URL}/confirm-payment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    paymentIntentId: paymentIntentId,
+                    cardNumber: document.getElementById('cardNumber').value,
+                    expiry: document.getElementById('expiry').value,
+                    cvc: document.getElementById('cvc').value,
+                    billing_address: billingAddress
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Payment confirmation failed');
+            }
+
+            return await response.json();
+        }
+
+        async function handle3DSecure(clientSecret) {
+            showStatus('processing', '3D Secure Authentication', 'Please complete the verification');
+
+            const { error: confirmError } = await stripe.confirmCardPayment(clientSecret);
+            
+            if (confirmError) {
+                throw new Error(confirmError.message);
+            }
+
+            showStatus('success', 'Payment Successful!', '3D Secure authentication completed');
+            resetForm();
+        }
+
+        function setLoading(loading) {
+            payButton.disabled = loading;
+            buttonText.style.display = loading ? 'none' : 'block';
+            buttonLoading.style.display = loading ? 'block' : 'none';
+        }
+
+        function showStatus(type, message, details) {
+            paymentStatus.className = `payment-status ${type}`;
+            statusMessage.textContent = message;
+            statusDetails.textContent = details;
+            
+            switch(type) {
+                case 'success':
+                    statusIcon.textContent = '✅';
+                    break;
+                case 'error':
+                    statusIcon.textContent = '❌';
+                    break;
+                case 'processing':
+                    statusIcon.textContent = '⏳';
+                    break;
+            }
+            
+            paymentStatus.style.display = 'block';
+            
+            // Auto-hide success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    paymentStatus.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('paymentForm').reset();
+            // Clear error states
+            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+        }
+
+        // Initialize - Load countries from API
+        async function loadCountries() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/countries`);
+                if (response.ok) {
+                    const data = await response.json();
+                    // You could populate the country dropdown with the full list here
                 }
             } catch (error) {
-                errorMessage.textContent = error.message;
-                errorMessage.style.display = 'block';
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Pay Now';
+                console.log('Using default country list');
+            }
+        }
+
+        // Load countries on startup
+        loadCountries();
+
+        // Add enter key support
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                payButton.click();
             }
         });
     </script>
