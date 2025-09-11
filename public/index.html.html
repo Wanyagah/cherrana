@@ -3,338 +3,465 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stripe Payment Integration</title>
-    <script src="https://js.stripe.com/v3/"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Secure Payment Processing</title>
     <style>
+        :root {
+            --primary: #4a6cf7;
+            --primary-dark: #3a56d4;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
-
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            background-color: #f9fafb;
+            color: var(--gray-900);
+            line-height: 1.6;
+            padding: 20px;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
-            line-height: 1.6;
         }
-
+        
         .container {
+            max-width: 900px;
+            width: 100%;
             background: white;
             border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            width: 100%;
-            max-width: 500px;
-            margin: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
         }
-
-        .header {
+        
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 25px;
             text-align: center;
-            margin-bottom: 30px;
         }
-
-        h1 {
-            color: #2d3748;
+        
+        .logo {
             font-size: 28px;
-            font-weight: 700;
+            font-weight: bold;
             margin-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #4a5568;
-            font-size: 16px;
-        }
-
-        .form-section {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f8fafc;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 20px;
             display: flex;
             align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-
-        .section-title i {
-            margin-right: 10px;
-            color: #667eea;
+        
+        .secure-notice {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            opacity: 0.9;
         }
-
+        
+        .payment-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .payment-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card-form {
+            padding: 30px;
+            background: white;
+        }
+        
+        .order-summary {
+            padding: 30px;
+            background: var(--gray-100);
+            border-left: 1px solid var(--gray-200);
+        }
+        
+        @media (max-width: 768px) {
+            .order-summary {
+                border-left: none;
+                border-top: 1px solid var(--gray-200);
+            }
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title svg {
+            color: var(--primary);
+        }
+        
         .form-group {
             margin-bottom: 20px;
         }
-
+        
         label {
             display: block;
-            font-weight: 600;
-            color: #4a5568;
             margin-bottom: 8px;
-            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-800);
         }
-
+        
         input, select {
             width: 100%;
-            padding: 14px;
-            border: 2px solid #e2e8f0;
+            padding: 14px 16px;
+            border: 1px solid var(--gray-300);
             border-radius: 8px;
             font-size: 16px;
-            transition: all 0.3s ease;
-            background: white;
+            transition: all 0.2s;
         }
-
+        
         input:focus, select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
         }
-
-        input.error, select.error {
-            border-color: #e53e3e;
-            box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+        
+        .input-error {
+            border-color: var(--danger);
         }
-
+        
         .error-message {
-            color: #e53e3e;
-            font-size: 12px;
+            color: var(--danger);
+            font-size: 14px;
             margin-top: 5px;
             display: none;
         }
-
-        .form-row {
+        
+        .card-input-group {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .card-input-group .form-group {
+            flex: 1;
+        }
+        
+        .card-icon {
+            height: 24px;
+            margin-top: 30px;
+        }
+        
+        .billing-toggle {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+            padding: 10px;
+            background: var(--gray-100);
+            border-radius: 8px;
+        }
+        
+        .billing-toggle input {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .billing-form {
+            display: none;
+            border-top: 1px solid var(--gray-200);
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        
+        .address-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
-
-        .pay-button {
-            width: 100%;
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+        
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .total {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 0;
+            font-weight: 600;
+            font-size: 18px;
+            border-top: 2px solid var(--gray-200);
+            margin-top: 10px;
+        }
+        
+        .btn {
+            background-color: var(--primary);
             color: white;
             border: none;
-            padding: 16px;
+            padding: 16px 20px;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            width: 100%;
+            transition: background-color 0.2s;
             margin-top: 10px;
         }
-
-        .pay-button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(26, 42, 108, 0.3);
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
         }
-
-        .pay-button:disabled {
-            opacity: 0.7;
+        
+        .btn:disabled {
+            background-color: var(--gray-300);
             cursor: not-allowed;
-            transform: none;
         }
-
-        .payment-status {
-            margin-top: 25px;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            display: none;
-        }
-
-        .payment-status.success {
-            background: #f0fff4;
-            border: 1px solid #9ae6b4;
-            color: #2f855a;
-        }
-
-        .payment-status.error {
-            background: #fff5f5;
-            border: 1px solid #feb2b2;
-            color: #c53030;
-        }
-
-        .payment-status.processing {
-            background: #fffaf0;
-            border: 1px solid #faf089;
-            color: #b7791f;
-        }
-
-        .status-icon {
-            font-size: 40px;
-            margin-bottom: 15px;
-        }
-
-        .status-message {
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 18px;
-        }
-
-        .status-details {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .loading-spinner {
+        
+        .loading {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid #ffffff;
+            border: 3px solid rgba(255,255,255,.3);
             border-radius: 50%;
-            border-top-color: transparent;
+            border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
         }
-
+        
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        .required::after {
-            content: ' *';
-            color: #e53e3e;
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
-
-        .card-logos {
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .success-icon {
+            font-size: 60px;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+        
+        .failure-icon {
+            font-size: 60px;
+            color: var(--danger);
+            margin-bottom: 20px;
+        }
+        
+        .status-message {
+            font-size: 22px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .status-details {
+            margin-bottom: 25px;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .action-buttons button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+        }
+        
+        .btn-secondary {
+            background-color: var(--gray-200);
+            color: var(--gray-800);
+            border: none;
+        }
+        
+        .processing-animation {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid var(--gray-200);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .card-types {
             display: flex;
             gap: 10px;
-            margin-top: 5px;
+            margin-top: 10px;
         }
         
-        .card-logo {
+        .card-type {
             height: 24px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
         }
         
-        .info-text {
-            font-size: 13px;
-            color: #718096;
-            margin-top: 5px;
+        .card-type.active {
+            opacity: 1;
         }
         
-        .api-status {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            background-color: #edf2f7;
+        footer {
+            padding: 20px;
+            text-align: center;
+            color: var(--gray-600);
             font-size: 14px;
-            display: none;
-        }
-        
-        .api-status.connected {
-            background-color: #f0fff4;
-            color: #2f855a;
-            border: 1px solid #9ae6b4;
-        }
-        
-        .api-status.error {
-            background-color: #fff5f5;
-            color: #c53030;
-            border: 1px solid #feb2b2;
-        }
-
-        @media (max-width: 600px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .container {
-                padding: 20px;
-                margin: 10px;
-            }
-            
-            h1 {
-                font-size: 24px;
-            }
+            border-top: 1px solid var(--gray-200);
+            background: var(--gray-100);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Stripe Payment Integration</h1>
-            <p class="subtitle">Complete payment form with Stripe API and backend communication</p>
-        </div>
-        
-        <div id="api-status" class="api-status">
-            <i class="fas fa-circle-notch fa-spin"></i> Checking backend connection...
-        </div>
-        
-        <form id="payment-form">
-            <!-- Customer Information Section -->
-            <div class="form-section">
-                <div class="section-title">
-                    <i class="fas fa-user"></i>Customer Information
-                </div>
-                
-                <div class="form-group">
-                    <label for="name" class="required">Full Name</label>
-                    <input type="text" id="name" placeholder="John Doe" required>
-                    <div class="error-message" id="name-error">Please enter your full name</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="email" class="required">Email Address</label>
-                    <input type="email" id="email" placeholder="john@example.com" required>
-                    <div class="error-message" id="email-error">Please enter a valid email address</div>
-                </div>
-                
-                <!-- Phone number field has been removed as requested -->
+        <header>
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
+                SecurePay
             </div>
-
-            <!-- Billing Address Section -->
-            <div class="form-section">
-                <div class="section-title">
-                    <i class="fas fa-map-marker-alt"></i>Billing Address
-                </div>
+            <div class="secure-notice">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span>256-bit SSL Encryption · Secure Payment Processing</span>
+            </div>
+        </header>
+        
+        <div class="payment-container">
+            <div class="card-form">
+                <h2 class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    Payment Details
+                </h2>
                 
-                <div class="form-group">
-                    <label for="line1" class="required">Street Address</label>
-                    <input type="text" id="line1" placeholder="123 Main St" required>
-                    <div class="error-message" id="line1-error">Please enter your street address</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="line2">Apartment, Suite, etc. (Optional)</label>
-                    <input type="text" id="line2" placeholder="Apt 4B">
-                </div>
-
-                <div class="form-row">
+                <form id="payment-form">
                     <div class="form-group">
-                        <label for="city" class="required">City</label>
-                        <input type="text" id="city" placeholder="New York" required>
-                        <div class="error-message" id="city-error">Please enter your city</div>
+                        <label for="card-number">Card Number</label>
+                        <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19">
+                        <div class="error-message" id="card-number-error">Please enter a valid card number</div>
+                        
+                        <div class="card-types">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iIzAwN0JDNiIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiNERDExMzciIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTgxLjcgMzYuNi04MS43IDgxLjdzMzYuNiA4MS43IDgxLjcgODEuN3M4MS43LTM2LjYgODEuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="Visa">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iIzAwNEE4NSIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiMwMDNENTciIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTgxLjcgMzYuNi04MS43IDgxLjdzMzYuNiA4MS43IDgxLjcgODEuN3M4MS43LTM2LjYgODEuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="Mastercard">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iI0YxQzQwOCIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiNGRTM1NDUiIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTg1LjcgMzAuNi04NS43IDgxLjdzNDAuNiA4MS43IDg1LjcgODEuN3M4NS43LTMwLjYgODUuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="American Express">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iIzAwMDA5QyIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiMwMDAwOUMiIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTgxLjcgMzYuNi04MS43IDgxLjdzMzYuNiA4MS43IDgxLjcgODEuN3M4MS43LTM2LjYgODEuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNS45eiIvPjwvc3ZnPg==" class="card-type" alt="Discover">
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="postal_code" class="required">ZIP/Postal Code</label>
-                        <input type="text" id="postal_code" placeholder="10001" required>
-                        <div class="error-message" id="postal_code-error">Please enter your ZIP code</div>
+                    
+                    <div class="card-input-group">
+                        <div class="form-group">
+                            <label for="expiry">Expiry Date</label>
+                            <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
+                            <div class="error-message" id="expiry-error">Please enter a valid expiry date</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cvc">Security Code (CVC)</label>
+                            <input type="text" id="cvc" placeholder="123" maxlength="4">
+                            <div class="error-message" id="cvc-error">Please enter a valid CVC</div>
+                        </div>
                     </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="state" class="required">State/Province</label>
-                        <input type="text" id="state" placeholder="NY" required>
-                        <div class="error-message" id="state-error">Please enter your state</div>
+                    
+                    <div class="billing-toggle">
+                        <input type="checkbox" id="billing-toggle">
+                        <label for="billing-toggle">Add billing address</label>
                     </div>
-
-                    <div class="form-group">
-                        <label for="country" class="required">Country</label>
-                        <select id="country" required>
-                            <option value="">Select Country</option>
-                            <option value="US">United States</option>
+                    
+                    <div class="billing-form" id="billing-form">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" placeholder="John Doe">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" placeholder="john.doe@example.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="street">Street Address</label>
+                            <input type="text" id="street" placeholder="123 Main St">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="street2">Apt, Suite, etc. (Optional)</label>
+                            <input type="text" id="street2" placeholder="Apt 456">
+                        </div>
+                        
+                        <div class="address-row">
+                            <div class="form-group">
+                                <label for="city">City</label>
+                                <input type="text" id="city" placeholder="New York">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="zip">ZIP / Postal Code</label>
+                                <input type="text" id="zip" placeholder="10001">
+                            </div>
+                        </div>
+                        
+                        <div class="address-row">
+                            <div class="form-group">
+                                <label for="country">Country</label>
+                                <select id="country">
+<option value="US">United States</option>
                                 <option value="CA">Canada</option>
                                 <option value="GB">United Kingdom</option>
                                 <option value="AU">Australia</option>
@@ -528,295 +655,298 @@
                                 <option value="YE">Yemen</option>
                                 <option value="ZM">Zambia</option>
                                 <option value="ZW">Zimbabwe</option
-                        </select>
-                        <div class="error-message" id="country-error">Please select your country</div>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="state">State / Province</label>
+                                <input type="text" id="state" placeholder="NY">
+                            </div>
+                        </div>
                     </div>
-                </div>
+                    
+                    <button type="submit" id="submit-button" class="btn">
+                        Pay Now
+                    </button>
+                </form>
             </div>
-
-            <!-- Payment Details Section -->
-            <div class="form-section">
-                <div class="section-title">
-                    <i class="fas fa-credit-card"></i>Payment Details
+            
+            <div class="order-summary">
+                <h2 class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Order Summary
+                </h2>
+                
+                <div class="product-item">
+                    <div>Premium Subscription</div>
+                    <div>$49.99</div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="amount" class="required">Amount (USD)</label>
-                    <input type="number" id="amount" min="0.01" step="0.01" placeholder="0.00" value="50.00" required>
-                    <div class="error-message" id="amount-error">Please enter a valid amount</div>
+                <div class="product-item">
+                    <div>Tax</div>
+                    <div>$4.50</div>
                 </div>
-
-                <!-- Stripe Card Element will be inserted here -->
-                <div class="form-group">
-                    <label for="card-element" class="required">Card Details</label>
-                    <div id="card-element" style="padding: 14px; border: 2px solid #e2e8f0; border-radius: 8px;">
-                        <!-- Stripe.js will create card elements here -->
+                
+                <div class="product-item">
+                    <div>Service Fee</div>
+                    <div>$2.99</div>
+                </div>
+                
+                <div class="total">
+                    <div>Total</div>
+                    <div>$57.48</div>
+                </div>
+                
+                <div class="processing-animation" id="processing-animation" style="display: none;">
+                    <div class="spinner"></div>
+                </div>
+                
+                <div style="margin-top: 30px; padding: 15px; background: white; border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        Secure Payment Info
                     </div>
-                    <div id="card-errors" class="error-message"></div>
-                    <div class="card-logos">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" class="card-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" class="card-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/American_Express_logo_%282018%29.svg" alt="American Express" class="card-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Discover_Card_logo.svg" alt="Discover" class="card-logo">
+                    <div style="font-size: 14px; color: var(--gray-600); line-height: 1.5;">
+                        Your payment information is encrypted and processed securely. We do not store your card details.
                     </div>
                 </div>
             </div>
-
-            <button type="submit" id="submit-button" class="pay-button">
-                <span id="button-text">Pay Now</span>
-                <span id="button-loading" style="display: none;">
-                    <span class="loading-spinner"></span> Processing...
-                </span>
-            </button>
-            
-            <p class="info-text">Your payment information is securely processed by Stripe. We never store your card details.</p>
-        </form>
-
-        <div id="payment-status" class="payment-status">
-            <div class="status-icon">✅</div>
-            <div class="status-message"></div>
-            <div class="status-details"></div>
+        </div>
+        
+        <footer>
+            © 2023 SecurePay | PCI DSS Compliant | Terms of Service
+        </footer>
+    </div>
+    
+    <div class="modal" id="success-modal">
+        <div class="modal-content">
+            <div class="success-icon">✅</div>
+            <div class="status-message">Payment Successful!</div>
+            <div class="status-details">
+                Your payment of $57.48 has been processed successfully. A confirmation email has been sent to your email address.
+            </div>
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="window.location.reload()">Done</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="error-modal">
+        <div class="modal-content">
+            <div class="failure-icon">❌</div>
+            <div class="status-message" id="error-title">Payment Failed</div>
+            <div class="status-details" id="error-details">
+                There was an issue processing your payment. Please try again.
+            </div>
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="closeModal('error-modal')">Try Again</button>
+                <button class="btn-secondary" onclick="window.location.reload()">Cancel</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Configuration - Replace with your actual keys and endpoints
-        const STRIPE_PUBLISHABLE_KEY = 'pk_live_51R2yuLFKJ2Qtcy9Lf5eA50tPeQdQYMuDhi5E9ur0qWggBg4lqD0ikQgbWEyHsTg9LNtlLx4yKpzEBDY9pZCRR3wx00eCaGkuVa'; // Replace with your test publishable key
-        const BACKEND_URL = 'https://charannapos.onrender.com'; // Replace with your backend URL
-
-        // Initialize Stripe
-        const stripe = Stripe(STRIPE_PUBLISHABLE KEY);
-        const elements = stripe.elements();
-
-        // DOM Elements
-        const payButton = document.getElementById('submit-button');
-        const buttonText = document.getElementById('button-text');
-        const buttonLoading = document.getElementById('button-loading');
-        const paymentStatus = document.getElementById('payment-status');
-        const statusMessage = paymentStatus.querySelector('.status-message');
-        const statusDetails = paymentStatus.querySelector('.status-details');
-        const statusIcon = paymentStatus.querySelector('.status-icon');
-        const apiStatus = document.getElementById('api-status');
-        const form = document.getElementById('payment-form');
-
-        // Create card element
-        const cardElement = elements.create('card', {
-            style: {
-                base: {
-                    fontSize: '16px',
-                    color: '#32325d',
-                    '::placeholder': {
-                        color: '#aab7c4'
-                    }
-                },
-                invalid: {
-                    color: '#e53e3e'
+        document.addEventListener('DOMContentLoaded', function() {
+            // Format card number with spaces
+            const cardNumberInput = document.getElementById('card-number');
+            cardNumberInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                if (value) {
+                    value = value.match(new RegExp('.{1,4}', 'g')).join(' ');
                 }
-            }
-        });
-
-        // Mount card element
-        cardElement.mount('#card-element');
-
-        // Handle real-time validation errors from the card Element
-        cardElement.on('change', function(event) {
-            const displayError = document.getElementById('card-errors');
-            if (event.error) {
-                displayError.textContent = event.error.message;
-                displayError.style.display = 'block';
-            } else {
-                displayError.textContent = '';
-                displayError.style.display = 'none';
-            }
-        });
-
-        // Check backend connection on page load
-        checkBackendConnection();
-
-        async function checkBackendConnection() {
-            apiStatus.style.display = 'block';
-            try {
-                // In a real implementation, you would check your backend health endpoint
-                // For demo purposes, we'll simulate a connection check
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                e.target.value = value;
                 
-                // Simulate successful connection 90% of the time
-                const isConnected = Math.random() > 0.1;
-                
-                if (isConnected) {
-                    apiStatus.innerHTML = '<i class="fas fa-check-circle"></i> Connected to payment processor';
-                    apiStatus.classList.add('connected');
-                } else {
-                    throw new Error('Cannot connect to payment service');
-                }
-            } catch (error) {
-                apiStatus.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${error.message || 'Connection error'}`;
-                apiStatus.classList.add('error');
-            }
-        }
-
-        // Handle form submission
-        .addEventListener('submit', async function(event) {
-            event.preventDefault();
+                // Detect card type
+                detectCardType(value.replace(/\s/g, ''));
+            });
             
-            if (!validateForm()) {
-                showStatus('error', 'Please fix the errors in the form', 'Check all required fields and try again');
-                return;
-            }
-
-            setLoading(true, 'Processing...');
-            showStatus('processing', 'Processing payment...', 'Please wait while we process your payment');
-
-            try {
-                // Step 1: Create payment intent on backend
-                const paymentIntent = await createPaymentIntent();
+            // Format expiry date
+            const expiryInput = document.getElementById('expiry');
+            expiryInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value;
+            });
+            
+            // Only allow numbers for CVC
+            const cvcInput = document.getElementById('cvc');
+            cvcInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+            
+            // Toggle billing address form
+            const billingToggle = document.getElementById('billing-toggle');
+            const billingForm = document.getElementById('billing-form');
+            
+            billingToggle.addEventListener('change', function() {
+                billingForm.style.display = this.checked ? 'block' : 'none';
+            });
+            
+            // Handle form submission
+            const paymentForm = document.getElementById('payment-form');
+            paymentForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
                 
-                // Step 2: Confirm card payment with Stripe
-                const result = await stripe.confirmCardPayment(paymentIntent.client_secret, {
-                    payment_method: {
-                        card: cardElement,
-                        billing_details: {
-                            name: document.getElementById('name').value,
-                            email: document.getElementById('email').value,
-                            address: {
-                                line1: document.getElementById('line1').value,
-                                line2: document.getElementById('line2').value,
-                                city: document.getElementById('city').value,
-                                state: document.getElementById('state').value,
-                                postal_code: document.getElementById('postal_code').value,
-                                country: document.getElementById('country').value,
-                            }
+                if (validateForm()) {
+                    const submitButton = document.getElementById('submit-button');
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<div class="loading"></div> Processing...';
+                    
+                    document.getElementById('processing-animation').style.display = 'flex';
+                    
+                    // Simulate payment processing
+                    setTimeout(() => {
+                        // 80% chance of success
+                        if (Math.random() > 0.2) {
+                            showSuccess();
+                        } else {
+                            showError('Payment Failed', 'Your card was declined. Please check your card details and try again.');
                         }
-                    }
-                });
-
-                if (result.error) {
-                    // Show error to your customer
-                    throw new Error(result.error.message);
-                } else {
-                    // The payment has been processed!
-                    if (result.paymentIntent.status === 'succeeded') {
-                        // Show a success message to your customer
-                        showStatus('success', 'Payment Successful!', `Your payment of $${document.getElementById('amount').value} was processed successfully. Transaction ID: ${result.paymentIntent.id}`);
                         
-                        // Reset form after successful payment
-                        setTimeout(() => {
-                            resetForm();
-                        }, 5000);
-                    }
-                }
-            } catch (error) {
-                console.error('Payment error:', error);
-                showStatus('error', 'Payment Failed', error.message || 'Please try again');
-            } finally {
-                setLoading(false, 'Pay Now');
-            }
-        });
-
-        // Create payment intent by calling backend
-        async function createPaymentIntent() {
-            const amount = parseFloat(document.getElementById('amount').value) * 100; // Convert to cents
-            
-            // In a real implementation, you would call your backend
-            // For demo purposes, we'll simulate this API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Simulate successful payment intent creation 90% of the time
-            const isSuccess = Math.random() > 0.1;
-            
-            if (isSuccess) {
-                return {
-                    client_secret: 'pi_3MockClientSecret_abcdef', // Mock client secret
-                    id: `pi_${generateTransactionId()}`
-                };
-            } else {
-                throw new Error('Unable to create payment intent. Please try again.');
-            }
-        }
-
-        // Validation functions
-        function validateForm() {
-            let isValid = true;
-
-            // Validate required fields
-            const requiredFields = ['name', 'email', 'line1', 'city', 'postal_code', 'state', 'country', 'amount'];
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field);
-                if (!element.value.trim()) {
-                    toggleError(field, true);
-                    isValid = false;
-                } else {
-                    toggleError(field, false);
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = 'Pay Now';
+                        document.getElementById('processing-animation').style.display = 'none';
+                    }, 2000);
                 }
             });
-
-            // Validate email format
-            if (!validateEmail(document.getElementById('email').value)) {
-                toggleError('email', true);
-                isValid = false;
+        });
+        
+        function detectCardType(cardNumber) {
+            const cardTypes = document.querySelectorAll('.card-type');
+            cardTypes.forEach(card => card.classList.remove('active'));
+            
+            if (/^4/.test(cardNumber)) {
+                document.querySelector('.card-type[alt="Visa"]').classList.add('active');
+            } else if (/^5[1-5]/.test(cardNumber)) {
+                document.querySelector('.card-type[alt="Mastercard"]').classList.add('active');
+            } else if (/^3[47]/.test(cardNumber)) {
+                document.querySelector('.card-type[alt="American Express"]').classList.add('active');
+            } else if (/^6(?:011|5)/.test(cardNumber)) {
+                document.querySelector('.card-type[alt="Discover"]').classList.add('active');
             }
-
+        }
+        
+        function validateForm() {
+            let isValid = true;
+            
+            // Validate card number (simple Luhn check)
+            const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+            if (!cardNumber || !luhnCheck(cardNumber) || cardNumber.length < 13) {
+                showErrorField('card-number', 'card-number-error');
+                isValid = false;
+            } else {
+                hideErrorField('card-number', 'card-number-error');
+            }
+            
+            // Validate expiry date
+            const expiry = document.getElementById('expiry').value;
+            const [month, year] = expiry.split('/');
+            const currentYear = new Date().getFullYear() % 100;
+            const currentMonth = new Date().getMonth() + 1;
+            
+            if (!expiry || !month || !year || 
+                month < 1 || month > 12 || 
+                year < currentYear || (year == currentYear && month < currentMonth)) {
+                showErrorField('expiry', 'expiry-error');
+                isValid = false;
+            } else {
+                hideErrorField('expiry', 'expiry-error');
+            }
+            
+            // Validate CVC
+            const cvc = document.getElementById('cvc').value;
+            if (!cvc || cvc.length < 3 || cvc.length > 4) {
+                showErrorField('cvc', 'cvc-error');
+                isValid = false;
+            } else {
+                hideErrorField('cvc', 'cvc-error');
+            }
+            
+            // Validate billing address if enabled
+            const billingToggle = document.getElementById('billing-toggle');
+            if (billingToggle.checked) {
+                const street = document.getElementById('street').value;
+                const zip = document.getElementById('zip').value;
+                const country = document.getElementById('country').value;
+                
+                if (!street || street.length < 2) {
+                    showErrorField('street', 'street-error');
+                    isValid = false;
+                }
+                
+                if (!zip || zip.length < 3) {
+                    showErrorField('zip', 'zip-error');
+                    isValid = false;
+                }
+                
+                if (!country) {
+                    showErrorField('country', 'country-error');
+                    isValid = false;
+                }
+            }
+            
             return isValid;
         }
-
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        function toggleError(fieldId, showError) {
-            const field = document.getElementById(fieldId);
-            const error = document.getElementById(fieldId + '-error');
-            
-            if (showError) {
-                field.classList.add('error');
-                if (error) error. style.display = 'block';
-            } else {
-                field.classList.remove('error');
-                if (error) error. style.display = 'none';
+        
+        function showErrorField(inputId, errorId) {
+            document.getElementById(inputId).classList.add('input-error');
+            const errorElement = document.getElementById(errorId);
+            if (errorElement) {
+                errorElement.style.display = 'block';
             }
         }
-
-        function generateTransactionId() {
-            return Math.random().toString(36).substr(2, 9).toUpperCase();
+        
+        function hideErrorField(inputId, errorId) {
+            document.getElementById(inputId).classList.remove('input-error');
+            const errorElement = document.getElementById(errorId);
+            if (errorElement) {
+                errorElement.style.display = 'none';
+            }
         }
-
-        function setLoading(loading, buttonTextContent) {
-            payButton.disabled = loading;
-            buttonText.textContent = buttonTextContent;
-            buttonText.style.display = loading ? 'none': 'block';
-            buttonLoading.style.display = loading ? 'block': 'none';
+        
+        function showSuccess() {
+            document.getElementById('success-modal').style.display = 'flex';
         }
-
-        function showStatus(type, message, details) {
-            paymentStatus.className = `payment-status ${type}`;
-            statusMessage.textContent = message;
-            statusDetails.textContent = details;
+        
+        function showError(title, message) {
+            document.getElementById('error-title').textContent = title;
+            document.getElementById('error-details').textContent = message;
+            document.getElementById('error-modal').style.display = 'flex';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Luhn algorithm for card number validation
+        function luhnCheck(cardNumber) {
+            let sum = 0;
+            let isEven = false;
             
-            switch(type) {
-                case 'success':
-                    statusIcon.innerHTML = '✅';
-                    break;
-                case 'error':
-                    statusIcon.innerHTML = '❌';
-                    break;
-                case 'processing':
-                    statusIcon.innerHTML = '⏳';
-                    break;
+            for (let i = cardNumber.length - 1; i >= 0; i--) {
+                let digit = parseInt(cardNumber.charAt(i), 10);
+                
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) {
+                        digit -= 9;
+                    }
+                }
+                
+                sum += digit;
+                isEven = !isEven;
             }
             
-            paymentStatus.style.display = 'block';
-        }
-
-        function resetForm() {
-            form.reset();
-            cardElement.clear();
-            // Clear error states
-            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
-            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
-            
-            // Hide status message
-            paymentStatus.style.display = 'none';
+            return (sum % 10) === 0;
         }
     </script>
 </body>
