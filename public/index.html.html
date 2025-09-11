@@ -104,7 +104,7 @@
 
     <script>
         // Replace with your Stripe publishable key
-        const stripe = Stripe('pk_test_your_publishable_key_herepk_live_51R2yuLFKJ2Qtcy9Lf5eA50tPeQdQYMuDhi5E9ur0qWggBg4lqD0ikQgbWEyHsTg9LNtlLx4yKpzEBDY9pZCRR3wx00eCaGkuVa');
+        const stripe = Stripe('pk_live_51R2yuLFKJ2Qtcy9Lf5eA50tPeQdQYMuDhi5E9ur0qWggBg4lqD0ikQgbWEyHsTg9LNtlLx4yKpzEBDY9pZCRR3wx00eCaGkuVa');
         const elements = stripe.elements();
         const cardElement = elements.create('card');
         cardElement.mount('#card-element');
@@ -165,7 +165,7 @@
                     throw new Error(result.error.message);
                 } else {
                     // Success
-                    successMessage.textContent = 'Payment successful! Thank you.';
+                    successMessage.textContent = 'Payment successful! Thank you.
                     successMessage.style.display = 'block';
                     form.reset();
                 }
