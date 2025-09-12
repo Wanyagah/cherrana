@@ -31,26 +31,37 @@ const logger = winston.createLogger({
   ]
 });
 
-// Configure CORS
+// Configure CORS for API endpoints
 const allowedOrigins = process.env.CORS_ORIGINS 
   ? process.env.CORS_ORIGINS.split(',') 
-  : [RENDER_URL, 'https://charannapos.onrender.com', 'http://localhost:8080', 'http://localhost:5500'];
+  : [RENDER_URL, 'https://charannapos.onrender.com', 'http://localhost:8080', 'http://localhost:5500', 'http://localhost:3000'];
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      logger.warn('CORS policy violation attempt', { origin });
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
-}));
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+// Apply CORS to all API routes
+app.use(cors(corsOptions));
+
+// Pre-flight requests
+app.options('*', cors(corsOptions));
 
 // Error handling for CORS
 app.use((err, req, res, next) => {
   if (err.message === 'Not allowed by CORS') {
-    res.status(403).json({ error: 'CORS policy violation' });
+    res.status(403).json({ 
+      error: 'CORS policy violation',
+      success: false 
+    });
   } else {
     next(err);
   }
@@ -83,27 +94,14 @@ const paymentLimiter = rateLimit({
 
 // Apply rate limiting to payment endpoints
 app.use('/create-payment-intent', paymentLimiter);
+app.use('/confirm-payment', paymentLimiter);
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // All countries supported by Stripe
 const ALL_COUNTRIES = [
-  'AC', 'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AT', 'AU', 'AW', 'AX', 'AZ',
-  'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS',
-  'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO',
-  'CR', 'CV', 'CW', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE', 'EG', 'EH', 'ER',
-  'ES', 'ET', 'FI', 'FJ', 'FK', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL',
-  'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HN', 'HR', 'HT', 'HU', 'ID',
-  'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IS', 'IT', 'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI',
-  'KM', 'KN', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV',
-  'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MK', 'ML', 'MM', 'MN', 'MO', 'MQ', 'MR', 'MS', 'MT',
-  'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA', 'NC', 'NE', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU',
-  'NZ', 'OM', 'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PY', 'QA',
-  'RE', 'RO', 'RS', 'RU', 'RW', 'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL',
-  'SM', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SX', 'SY', 'SZ', 'TA', 'TC', 'TD', 'TF', 'TG', 'TH',
-  'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'US', 'UY', 'UZ',
-  'VA', 'VC', 'VE', 'VG', 'VI', 'VN', 'VU', 'WF', 'WS', 'XK', 'YE', 'YT', 'ZA', 'ZM', 'ZW'
+  'US', 'CA', 'GB', 'AU', 'DE', 'FR', 'JP' // Simplified list for demo
 ];
 
 // Route for the root path - serve HTML file
@@ -114,7 +112,8 @@ app.get('/', (req, res) => {
 // Stripe configuration endpoint
 app.get('/stripe-config', (req, res) => {
   res.json({
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    success: true
   });
 });
 
@@ -127,28 +126,23 @@ app.get('/api/countries', (req, res) => {
   });
 });
 
-// Create payment intent endpoint - FIXED VERSION
+// Create payment intent endpoint
 app.post('/create-payment-intent', async (req, res) => {
   try {
     logger.info('Received payment request', { 
       endpoint: '/create-payment-intent',
-      fields: Object.keys(req.body)
+      body: req.body
     });
     
-    // Extract fields based on your HTML structure
+    // Extract fields
     const {
-      amount = 57.48, // Default amount from your frontend
+      amount = 57.48,
       currency = 'usd',
-      idempotencyKey
+      description = 'SecurePay Payment'
     } = req.body;
-
-    logger.info('Extracted payment values', {
-      amount, currency
-    });
 
     // Validate required fields
     if (!amount) {
-      logger.warn('Missing required field: amount');
       return res.status(400).json({
         error: 'Amount is required',
         success: false,
@@ -159,30 +153,30 @@ app.post('/create-payment-intent', async (req, res) => {
     // Convert amount to cents
     const amountInCents = Math.round(parseFloat(amount) * 100);
     
-    if (isNaN(amountInCents) || amountInCents <= 0) {
-      logger.warn('Invalid amount provided', { amount, amountInCents });
+    if (isNaN(amountInCents) || amountInCents < 50) { // Minimum amount check
       return res.status(400).json({
-        error: 'Invalid amount. Please enter a valid number.',
+        error: 'Invalid amount. Minimum payment is $0.50.',
         success: false
       });
     }
 
-    // Create payment intent with automatic payment methods
+    // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: currency.toLowerCase(),
+      description: description,
       automatic_payment_methods: {
         enabled: true,
       },
-      // Don't require all metadata upfront - it can be added later
-    }, {
-      idempotencyKey: idempotencyKey || `pi_${Date.now()}`
+      metadata: {
+        created_via: 'securepay_api'
+      }
     });
 
     logger.info('Payment intent created successfully', { 
       paymentIntentId: paymentIntent.id,
       amount: amountInCents,
-      currency: currency || 'usd',
+      currency: currency,
       status: paymentIntent.status
     });
     
@@ -190,6 +184,8 @@ app.post('/create-payment-intent', async (req, res) => {
       success: true,
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      amount: amountInCents,
+      currency: currency,
       message: 'Payment intent created successfully'
     });
     
@@ -206,6 +202,73 @@ app.post('/create-payment-intent', async (req, res) => {
     });
   }
 });
+
+// Webhook endpoint for Stripe events - NO CORS needed for webhooks
+app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    // Verify webhook signature
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+  } catch (err) {
+    logger.error('Webhook signature verification failed', { error: err.message });
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event
+  switch (event.type) {
+    case 'payment_intent.succeeded':
+      const paymentIntent = event.data.object;
+      logger.info('Payment succeeded via webhook', { 
+        paymentIntentId: paymentIntent.id,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency
+      });
+      // Here you can update your database, send confirmation emails, etc.
+      break;
+    case 'payment_intent.payment_failed':
+      const failedPaymentIntent = event.data.object;
+      logger.error('Payment failed via webhook', { 
+        paymentIntentId: failedPaymentIntent.id,
+        error: failedPaymentIntent.last_payment_error
+      });
+      break;
+    case 'payment_intent.requires_action':
+      const requiresAction = event.data.object;
+      logger.info('Payment requires action', { 
+        paymentIntentId: requiresAction.id
+      });
+      break;
+    default:
+      logger.info(`Unhandled event type: ${event.type}`);
+  }
+
+  // Return a response to acknowledge receipt of the event
+  res.json({received: true});
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  const stripeConfigured = !!process.env.STRIPE_SECRET_KEY;
+  
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    service: 'SecurePay Payment Server',
+    environment: process.env.NODE_ENV || 'production',
+    stripe: {
+      configured: stripeConfigured,
+      mode: stripeConfigured ? (process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') ? 'live' : 'test') : 'not_configured'
+    },
+    cors: {
+      allowedOrigins: allowedOrigins
+    }
+  });
+});
+
 
 // NEW: Endpoint to confirm payment with payment method - THIS IS THE KEY FIX
 app.post('/confirm-payment-intent', async (req, res) => {
