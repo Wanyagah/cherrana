@@ -398,7 +398,7 @@ app.use((error, req, res, next) => {
   res.status(500).json({
     error: 'Internal server error',
     success: false,
-    details: is Production? undefined: error.message
+    details: isProduction? undefined: error.message
   });
 });
 
