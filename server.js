@@ -34,7 +34,7 @@ const logger = winston.createLogger({
 // Configure CORS
 const allowedOrigins = process.env.CORS_ORIGINS 
   ? process.env.CORS_ORIGINS.split(',') 
-  : [RENDER_URL, 'https://charannapos.onrender.com', 'http://localhost:8080', 'http://localhost:5500'];
+  : [RENDER_URL, 'https://charannapos.onrender.com', 'http://localhost:8080', 'http://localhost:5500', 'http://localhost:3000'];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -101,7 +101,8 @@ app.get('/', (req, res) => {
 // Stripe configuration endpoint
 app.get('/stripe-config', (req, res) => {
   res.json({
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    success: true
   });
 });
 
@@ -119,22 +120,18 @@ app.post('/create-payment-intent', async (req, res) => {
   try {
     logger.info('Received payment request', { 
       endpoint: '/create-payment-intent',
-      fields: Object.keys(req.body)
+      body: req.body
     });
     
     // Extract fields
     const {
       amount = 57.48,
-      currency = 'usd'
+      currency = 'usd',
+      description = 'SecurePay Payment'
     } = req.body;
-
-    logger.info('Extracted payment values', {
-      amount, currency
-    });
 
     // Validate required fields
     if (!amount) {
-      logger.warn('Missing required field: amount');
       return res.status(400).json({
         error: 'Amount is required',
         success: false,
@@ -145,27 +142,30 @@ app.post('/create-payment-intent', async (req, res) => {
     // Convert amount to cents
     const amountInCents = Math.round(parseFloat(amount) * 100);
     
-    if (isNaN(amountInCents) || amountInCents <= 0) {
-      logger.warn('Invalid amount provided', { amount, amountInCents });
+    if (isNaN(amountInCents) || amountInCents < 50) { // Minimum amount check
       return res.status(400).json({
-        error: 'Invalid amount. Please enter a valid number.',
+        error: 'Invalid amount. Minimum payment is $0.50.',
         success: false
       });
     }
 
-    // Create payment intent with automatic payment methods
+    // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: currency.toLowerCase(),
+      description: description,
       automatic_payment_methods: {
         enabled: true,
+      },
+      metadata: {
+        created_via: 'securepay_api'
       }
     });
 
     logger.info('Payment intent created successfully', { 
       paymentIntentId: paymentIntent.id,
       amount: amountInCents,
-      currency: currency || 'usd',
+      currency: currency,
       status: paymentIntent.status
     });
     
@@ -173,6 +173,8 @@ app.post('/create-payment-intent', async (req, res) => {
       success: true,
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      amount: amountInCents,
+      currency: currency,
       message: 'Payment intent created successfully'
     });
     
@@ -190,107 +192,59 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 });
 
-// Complete payment in one step (create payment method and confirm payment intent)
+// Confirm payment with payment method ID (from Stripe Elements)
 app.post('/confirm-payment', async (req, res) => {
   try {
     const { 
       paymentIntentId, 
-      cardNumber, 
-      expiry, 
-      cvc, 
-      name,
-      email,
-      street,
-      city,
-      state,
-      zip,
-      country
+      paymentMethodId,
+      billingDetails
     } = req.body;
 
-    if (!paymentIntentId) {
+    if (!paymentIntentId || !paymentMethodId) {
       return res.status(400).json({
-        error: 'Payment intent ID is required',
+        error: 'Payment intent ID and payment method ID are required',
         success: false
       });
     }
-
-    // Parse expiry date (format: MM/YY)
-    const [expMonth, expYearPartial] = expiry.split('/');
-    const expYear = parseInt(expYearPartial) + 2000; // Convert YY to YYYY
-
-    // Clean card number
-    const cleanCardNumber = cardNumber.replace(/\s/g, '');
-
-    // Create payment method
-    const paymentMethod = await stripe.paymentMethods.create({
-      type: 'card',
-      card: {
-        number: cleanCardNumber,
-        exp_month: parseInt(expMonth),
-        exp_year: expYear,
-        cvc: cvc
-      },
-      billing_details: {
-        name: name,
-        email: email,
-        address: {
-          line1: street,
-          city: city,
-          state: state,
-          postal_code: zip,
-          country: country
-        }
-      }
-    });
 
     // Confirm the payment intent with the payment method
     const paymentIntent = await stripe.paymentIntents.confirm(
       paymentIntentId,
       { 
-        payment_method: paymentMethod.id,
-        return_url: `${req.headers.origin}/success` // For redirect-based flows
+        payment_method: paymentMethodId,
+        return_url: `${req.headers.origin}/success`
       }
     );
     
     logger.info('Payment confirmation status', {
       paymentIntentId,
-      status: paymentIntent.status
+      status: paymentIntent.status,
+      requiresAction: paymentIntent.status === 'requires_action'
     });
 
-    // Check the payment intent status
-    if (paymentIntent.status === 'succeeded') {
-      res.json({
-        success: true,
-        status: 'succeeded',
-        message: 'Payment completed successfully',
-        paymentIntent
-      });
-    } else if (paymentIntent.status === 'requires_action') {
-      // Handle 3D Secure authentication
-      res.json({
-        success: true,
-        status: 'requires_action',
-        message: 'Additional authentication required',
-        next_action: paymentIntent.next_action,
-        clientSecret: paymentIntent.client_secret
-      });
+    // Return appropriate response based on status
+    const response = {
+      success: true,
+      status: paymentIntent.status,
+      paymentIntentId: paymentIntent.id,
+      requiresAction: paymentIntent.status === 'requires_action',
+      clientSecret: paymentIntent.client_secret
+    };
+
+    if (paymentIntent.status === 'requires_action') {
+      response.message = 'Additional authentication required';
+      response.nextAction = paymentIntent.next_action;
+    } else if (paymentIntent.status === 'succeeded') {
+      response.message = 'Payment completed successfully';
+    } else if (paymentIntent.status === 'processing') {
+      response.message = 'Payment is processing';
     } else if (paymentIntent.status === 'requires_payment_method') {
-      // Handle failed payment
-      res.status(400).json({
-        success: false,
-        status: 'requires_payment_method',
-        error: 'Payment failed. Please try a different payment method.',
-        paymentIntent
-      });
-    } else {
-      // Handle other statuses
-      res.json({
-        success: true,
-        status: paymentIntent.status,
-        message: 'Payment processing',
-        paymentIntent
-      });
+      response.success = false;
+      response.message = 'Payment failed. Please try a different payment method.';
     }
+
+    res.json(response);
     
   } catch (error) {
     logger.error('Payment confirmation error', {
@@ -298,10 +252,45 @@ app.post('/confirm-payment', async (req, res) => {
       paymentIntentId: req.body.paymentIntentId
     });
     
+    // Handle specific Stripe errors
+    let errorMessage = 'Payment confirmation failed';
+    if (error.type === 'StripeCardError') {
+      errorMessage = error.message;
+    } else if (error.code === 'payment_intent_authentication_failure') {
+      errorMessage = 'Authentication failed. Please try again.';
+    }
+    
+    res.status(400).json({
+      error: errorMessage,
+      success: false,
+      details: error.message,
+      code: error.code || 'unknown_error'
+    });
+  }
+});
+
+// Retrieve payment intent status
+app.get('/payment-intent/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const paymentIntent = await stripe.paymentIntents.retrieve(id);
+    
+    res.json({
+      success: true,
+      status: paymentIntent.status,
+      paymentIntent: {
+        id: paymentIntent.id,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        status: paymentIntent.status,
+        created: paymentIntent.created,
+        charges: paymentIntent.charges
+      }
+    });
+  } catch (error) {
     res.status(400).json({
       error: error.message,
-      success: false,
-      details: 'Payment confirmation failed'
+      success: false
     });
   }
 });
@@ -332,12 +321,19 @@ app.get('/health', (req, res) => {
     stripe: {
       configured: stripeConfigured,
       mode: stripeConfigured ? (process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') ? 'live' : 'test') : 'not_configured'
+    },
+    endpoints: {
+      createPaymentIntent: 'POST /create-payment-intent',
+      confirmPayment: 'POST /confirm-payment',
+      getConfig: 'GET /stripe-config'
     }
   });
 });
 
 // Success page
 app.get('/success', (req, res) => {
+  const { payment_intent, payment_intent_client_secret } = req.query;
+  
   res.send(`
     <!DOCTYPE html>
     <html>
@@ -361,6 +357,7 @@ app.get('/success', (req, res) => {
           border-radius: 12px;
           color: #333;
           box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+          max-width: 500px;
         }
         .success { 
           color: #4CAF50; 
@@ -368,13 +365,23 @@ app.get('/success', (req, res) => {
           font-weight: bold;
           margin-bottom: 20px;
         }
+        .button {
+          background: #4a6cf7;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          text-decoration: none;
+          display: inline-block;
+          margin-top: 20px;
+        }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="success">✅ Payment Successful!</div>
         <p>Your payment has been processed successfully.</p>
-        <p>You can close this window and return to the application.</p>
+        <p>Payment Intent: ${payment_intent || 'N/A'}</p>
+        <a href="/" class="button">Return to Payment</a>
       </div>
     </body>
     </html>
@@ -413,4 +420,5 @@ app.listen(port, () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'production'}`);
   console.log(`💳 Stripe mode: ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'LIVE' : 'TEST'}`);
   console.log(`✅ Health check: http://localhost:${port}/health`);
+  console.log(`🔗 Allowed origins: ${allowedOrigins.join(', ')}`);
 });
