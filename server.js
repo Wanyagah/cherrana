@@ -1,6 +1,6 @@
 // Load required modules
 require('dotenv').config();
-const express = require('express'); // Add this line
+const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
 const cors = require('cors');
@@ -30,8 +30,6 @@ const logger = winston.createLogger({
     })
   ]
 });
-
-// ... rest of your server code remains the same, just remove sanitize-html references ...;
 
 // Configure CORS
 const allowedOrigins = process.env.CORS_ORIGINS 
@@ -71,18 +69,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware to sanitize inputs
-app.use((req, res, next) => {
-  if (req.body) {
-    Object.keys(req.body).forEach(key => {
-      if (typeof req.body[key] === 'string') {
-        req.body[key] = sanitizeHtml(req.body[key]);
-      }
-    });
-  }
-  next();
-});
-
 // Rate limiting for payment endpoints
 const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -97,27 +83,14 @@ const paymentLimiter = rateLimit({
 
 // Apply rate limiting to payment endpoints
 app.use('/create-payment-intent', paymentLimiter);
+app.use('/confirm-payment', paymentLimiter);
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // All countries supported by Stripe
 const ALL_COUNTRIES = [
-  'AC', 'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AT', 'AU', 'AW', 'AX', 'AZ',
-  'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS',
-  'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO',
-  'CR', 'CV', 'CW', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE', 'EG', 'EH', 'ER',
-  'ES', 'ET', 'FI', 'FJ', 'FK', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL',
-  'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HN', 'HR', 'HT', 'HU', 'ID',
-  'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IS', 'IT', 'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI',
-  'KM', 'KN', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV',
-  'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MK', 'ML', 'MM', 'MN', 'MO', 'MQ', 'MR', 'MS', 'MT',
-  'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA', 'NC', 'NE', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU',
-  'NZ', 'OM', 'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PY', 'QA',
-  'RE', 'RO', 'RS', 'RU', 'RW', 'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL',
-  'SM', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SX', 'SY', 'SZ', 'TA', 'TC', 'TD', 'TF', 'TG', 'TH',
-  'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'US', 'UY', 'UZ',
-  'VA', 'VC', 'VE', 'VG', 'VI', 'VN', 'VU', 'WF', 'WS', 'XK', 'YE', 'YT', 'ZA', 'ZM', 'ZW'
+  'US', 'CA', 'GB', 'AU', 'DE', 'FR', 'JP' // Simplified list for demo
 ];
 
 // Route for the root path - serve HTML file
@@ -149,47 +122,23 @@ app.post('/create-payment-intent', async (req, res) => {
       fields: Object.keys(req.body)
     });
     
-    // Extract fields based on your HTML structure
+    // Extract fields
     const {
-      name,
-      email,
-      street,
-      city,
-      state,
-      zip,
-      country,
-      amount = 57.48, // Default amount from your frontend
-      currency = 'usd',
-      paymentMethodId,
-      idempotencyKey
+      amount = 57.48,
+      currency = 'usd'
     } = req.body;
 
     logger.info('Extracted payment values', {
-      name, email, street, city, state, zip, country, amount, currency
+      amount, currency
     });
 
     // Validate required fields
-    const requiredFields = [
-      { value: amount, name: 'amount', label: 'Amount' },
-      { value: name, name: 'name', label: 'Full Name' },
-      { value: email, name: 'email', label: 'Email' },
-      { value: street, name: 'street', label: 'Street Address' },
-      { value: city, name: 'city', label: 'City' },
-      { value: state, name: 'state', label: 'State/Province' },
-      { value: zip, name: 'zip', label: 'ZIP/Postal Code' },
-      { value: country, name: 'country', label: 'Country' }
-    ];
-
-    const missingFields = requiredFields.filter(({ value }) => 
-      value === undefined || value === null || value === ''
-    );
-
-    if (missingFields.length > 0) {
-      logger.warn('Missing required fields', { missingFields });
+    if (!amount) {
+      logger.warn('Missing required field: amount');
       return res.status(400).json({
-        error: `Missing required fields: ${missingFields.map(f => f.label).join(', ')}`,
+        error: 'Amount is required',
         success: false,
-        missingFields: missingFields.map(f => f.name)
+        missingFields: ['amount']
       });
     }
 
@@ -204,40 +153,20 @@ app.post('/create-payment-intent', async (req, res) => {
       });
     }
 
-    // Create payment intent
+    // Create payment intent with automatic payment methods
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: currency.toLowerCase(),
-      payment_method_types: ['card'],
-      metadata: {
-        customer_name: name,
-        customer_email: email,
-        billing_street: street,
-        billing_city: city,
-        billing_state: state,
-        billing_zip: zip,
-        billing_country: country
-      },
-      shipping: {
-        name: name,
-        address: {
-          line1: street,
-          city: city,
-          state: state,
-          postal_code: zip,
-          country: country
-        }
-      },
-      receipt_email: email,
-      description: `SecurePay Payment - ${name}`
-    }, {
-      idempotencyKey: idempotencyKey || `pi_${Date.now()}`
+      automatic_payment_methods: {
+        enabled: true,
+      }
     });
 
     logger.info('Payment intent created successfully', { 
       paymentIntentId: paymentIntent.id,
       amount: amountInCents,
-      currency: currency || 'usd'
+      currency: currency || 'usd',
+      status: paymentIntent.status
     });
     
     res.json({
@@ -261,7 +190,7 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 });
 
-// Confirm payment endpoint
+// Complete payment in one step (create payment method and confirm payment intent)
 app.post('/confirm-payment', async (req, res) => {
   try {
     const { 
@@ -269,8 +198,13 @@ app.post('/confirm-payment', async (req, res) => {
       cardNumber, 
       expiry, 
       cvc, 
-      billing_address,
-      pin 
+      name,
+      email,
+      street,
+      city,
+      state,
+      zip,
+      country
     } = req.body;
 
     if (!paymentIntentId) {
@@ -280,17 +214,9 @@ app.post('/confirm-payment', async (req, res) => {
       });
     }
 
-    // Validate PIN if provided
-    if (pin && !/^\d{4}$|^\d{6}$/.test(pin)) {
-      return res.status(400).json({ 
-        error: 'PIN must be 4 or 6 digits' 
-      });
-    }
-
-    // Parse expiry
-    const [expMonth, expYear] = expiry.split('/').map(part => 
-      parseInt(part.trim()) + (part.length === 2 && parseInt(part) < 50 ? 2000 : 1900)
-    );
+    // Parse expiry date (format: MM/YY)
+    const [expMonth, expYearPartial] = expiry.split('/');
+    const expYear = parseInt(expYearPartial) + 2000; // Convert YY to YYYY
 
     // Clean card number
     const cleanCardNumber = cardNumber.replace(/\s/g, '');
@@ -300,27 +226,30 @@ app.post('/confirm-payment', async (req, res) => {
       type: 'card',
       card: {
         number: cleanCardNumber,
-        exp_month: expMonth,
+        exp_month: parseInt(expMonth),
         exp_year: expYear,
         cvc: cvc
       },
-      billing_details: billing_address ? {
-        name: billing_address.name,
-        email: billing_address.email,
+      billing_details: {
+        name: name,
+        email: email,
         address: {
-          line1: billing_address.street,
-          city: billing_address.city,
-          state: billing_address.state,
-          postal_code: billing_address.zip,
-          country: billing_address.country
+          line1: street,
+          city: city,
+          state: state,
+          postal_code: zip,
+          country: country
         }
-      } : undefined
+      }
     });
 
-    // Confirm the payment intent
+    // Confirm the payment intent with the payment method
     const paymentIntent = await stripe.paymentIntents.confirm(
       paymentIntentId,
-      { payment_method: paymentMethod.id }
+      { 
+        payment_method: paymentMethod.id,
+        return_url: `${req.headers.origin}/success` // For redirect-based flows
+      }
     );
     
     logger.info('Payment confirmation status', {
@@ -328,11 +257,40 @@ app.post('/confirm-payment', async (req, res) => {
       status: paymentIntent.status
     });
 
-    res.json({
-      success: true,
-      status: paymentIntent.status,
-      paymentIntent
-    });
+    // Check the payment intent status
+    if (paymentIntent.status === 'succeeded') {
+      res.json({
+        success: true,
+        status: 'succeeded',
+        message: 'Payment completed successfully',
+        paymentIntent
+      });
+    } else if (paymentIntent.status === 'requires_action') {
+      // Handle 3D Secure authentication
+      res.json({
+        success: true,
+        status: 'requires_action',
+        message: 'Additional authentication required',
+        next_action: paymentIntent.next_action,
+        clientSecret: paymentIntent.client_secret
+      });
+    } else if (paymentIntent.status === 'requires_payment_method') {
+      // Handle failed payment
+      res.status(400).json({
+        success: false,
+        status: 'requires_payment_method',
+        error: 'Payment failed. Please try a different payment method.',
+        paymentIntent
+      });
+    } else {
+      // Handle other statuses
+      res.json({
+        success: true,
+        status: paymentIntent.status,
+        message: 'Payment processing',
+        paymentIntent
+      });
+    }
     
   } catch (error) {
     logger.error('Payment confirmation error', {
@@ -348,41 +306,6 @@ app.post('/confirm-payment', async (req, res) => {
   }
 });
 
-// Webhook endpoint for Stripe events (for handling asynchronous payments)
-app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-  } catch (err) {
-    logger.error('Webhook signature verification failed', { error: err.message });
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // Handle the event
-  switch (event.type) {
-    case 'payment_intent.succeeded':
-      const paymentIntent = event.data.object;
-      logger.info('Payment succeeded via webhook', { paymentIntentId: paymentIntent.id });
-      // Here you can update your database, send confirmation emails, etc.
-      break;
-    case 'payment_intent.payment_failed':
-      const failedPaymentIntent = event.data.object;
-      logger.error('Payment failed via webhook', { 
-        paymentIntentId: failedPaymentIntent.id,
-        error: failedPaymentIntent.last_payment_error
-      });
-      break;
-    default:
-      logger.info(`Unhandled event type: ${event.type}`);
-  }
-
-  res.json({received: true});
-});
-
 // Test endpoint to check form data
 app.post('/test-form', (req, res) => {
   logger.info('Form submission test', {
@@ -393,8 +316,7 @@ app.post('/test-form', (req, res) => {
   res.json({
     success: true,
     message: 'Form data received successfully',
-    receivedData: req.body,
-    fieldDetails: 'Check that all form fields have name attributes matching the server expectations'
+    receivedData: req.body
   });
 });
 
@@ -409,16 +331,8 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'production',
     stripe: {
       configured: stripeConfigured,
-      mode: stripeConfigured? (process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') ? 'live' : 'test') : 'not_configured'
-    },
-    features: {
-      cvc_verification: true,
-      billing_address: true,
-      countries: ALL_COUNTRIES.length
-    },
-    expectedFieldNames: [
-      'name', 'email', 'street', 'city', 'state', 'zip', 'country', 'amount', 'currency'
-    ]
+      mode: stripeConfigured ? (process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') ? 'live' : 'test') : 'not_configured'
+    }
   });
 });
 
@@ -484,7 +398,7 @@ app.use((error, req, res, next) => {
   res.status(500).json({
     error: 'Internal server error',
     success: false,
-    details: isProduction? undefined: error.message
+    details: is Production? undefined: error.message
   });
 });
 
@@ -499,6 +413,4 @@ app.listen(port, () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'production'}`);
   console.log(`💳 Stripe mode: ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'LIVE' : 'TEST'}`);
   console.log(`✅ Health check: http://localhost:${port}/health`);
-  console.log(`🧪 Test form: http://localhost:${port}/test-form`);
-  console.log(`🔗 Render URL: ${RENDER_URL}`);
 });
