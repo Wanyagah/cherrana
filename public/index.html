@@ -254,6 +254,28 @@
             margin-top: 5px;
             display: none;
         }
+        
+        .server-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .server-info h3 {
+            margin-bottom: 10px;
+            color: #635bff;
+        }
+        
+        .endpoint {
+            background-color: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -520,7 +542,6 @@
                                 <option value="YE">Yemen</option>
                                 <option value="ZM">Zambia</option>
                                 <option value="ZW">Zimbabwe</option>
-                                <!-- Other country options would go here -->
                             </select>
                             <div class="validation-error" id="country-error">Please select your country</div>
                         </div>
@@ -565,13 +586,26 @@
                 <i class="fas fa-lock"></i> Your payment information is encrypted and processed securely by Stripe
             </div>
         </form>
+        
+        <div class="server-info">
+            <h3>Server Configuration</h3>
+            <p>This form is configured to work with a server that has proper CORS settings:</p>
+            <div class="endpoint">GET /stripe-config</div>
+            <div class="endpoint">POST /create-payment-intent</div>
+            <p>Make sure your server includes the proper CORS headers for your domain.</p>
+        </div>
     </div>
 
     <script>
+        // Define API endpoints - Update these to match your server URLs
+        const API_BASE_URL = ''; // Use relative paths if on same domain
+        const STRIPE_CONFIG_ENDPOINT = '/stripe-config';
+        const CREATE_PAYMENT_INTENT_ENDPOINT = '/create-payment-intent';
+
         // Function to get Stripe publishable key from server
         async function getStripePublishableKey() {
             try {
-                const response = await fetch('/stripe-config');
+                const response = await fetch(API_BASE_URL + STRIPE_CONFIG_ENDPOINT);
                 if (!response.ok) {
                     throw new Error('Failed to fetch Stripe configuration');
                 }
@@ -767,7 +801,7 @@
                 
                 // Payment method created successfully, now send to your server
                 try {
-                    const response = await fetch('/create-payment-intent', {
+                    const response = await fetch(API_BASE_URL + CREATE_PAYMENT_INTENT_ENDPOINT, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
