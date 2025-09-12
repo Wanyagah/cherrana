@@ -1,5 +1,6 @@
 // Load required modules
 require('dotenv').config();
+const express = require('express'); // Add this line
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
 const cors = require('cors');
