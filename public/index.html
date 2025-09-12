@@ -38,7 +38,7 @@
         }
         
         .container {
-            max-width: 900px;
+            max-width: 500px;
             width: 100%;
             background: white;
             border-radius: 16px;
@@ -72,34 +72,9 @@
             opacity: 0.9;
         }
         
-        .payment-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-        }
-        
-        @media (max-width: 768px) {
-            .payment-container {
-                grid-template-columns: 1fr;
-            }
-        }
-        
         .card-form {
             padding: 30px;
             background: white;
-        }
-        
-        .order-summary {
-            padding: 30px;
-            background: var(--gray-100);
-            border-left: 1px solid var(--gray-200);
-        }
-        
-        @media (max-width: 768px) {
-            .order-summary {
-                border-left: none;
-                border-top: 1px solid var(--gray-200);
-            }
         }
         
         .section-title {
@@ -162,11 +137,6 @@
             flex: 1;
         }
         
-        .card-icon {
-            height: 24px;
-            margin-top: 30px;
-        }
-        
         .billing-toggle {
             display: flex;
             align-items: center;
@@ -193,23 +163,6 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-        }
-        
-        .product-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--gray-200);
-        }
-        
-        .total {
-            display: flex;
-            justify-content: space-between;
-            padding: 20px 0;
-            font-weight: 600;
-            font-size: 18px;
-            border-top: 2px solid var(--gray-200);
-            margin-top: 10px;
         }
         
         .btn {
@@ -322,37 +275,6 @@
             border: none;
         }
         
-        .processing-animation {
-            display: flex;
-            justify-content: center;
-            margin: 30px 0;
-        }
-        
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid var(--gray-200);
-            border-top: 5px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        .card-types {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .card-type {
-            height: 24px;
-            opacity: 0.5;
-            transition: opacity 0.2s;
-        }
-        
-        .card-type.active {
-            opacity: 1;
-        }
-        
         footer {
             padding: 20px;
             text-align: center;
@@ -360,6 +282,46 @@
             font-size: 14px;
             border-top: 1px solid var(--gray-200);
             background: var(--gray-100);
+        }
+        
+        .payment-amount {
+            background: var(--gray-100);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .currency-selector select {
+            width: auto;
+            min-width: 100px;
+        }
+        
+        .amount-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .amount-input span {
+            font-weight: 500;
+        }
+        
+        .amount-input input {
+            flex: 1;
+        }
+        
+        .card-detection {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--gray-600);
+            min-height: 20px;
         }
     </style>
 </head>
@@ -381,91 +343,106 @@
             </div>
         </header>
         
-        <div class="payment-container">
-            <div class="card-form">
-                <h2 class="section-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                        <line x1="1" y1="10" x2="23" y2="10"></line>
-                    </svg>
-                    Payment Details
-                </h2>
+        <div class="card-form">
+            <h2 class="section-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
+                Payment Details
+            </h2>
+            
+            <div class="payment-amount">
+                <div class="currency-selector">
+                    <label for="currency">Currency:</label>
+                    <select id="currency">
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="JPY">JPY (¥)</option>
+                        <option value="CAD">CAD (C$)</option>
+                        <option value="AUD">AUD (A$)</option>
+                    </select>
+                </div>
                 
-                <form id="payment-form">
+                <div class="amount-input">
+                    <span>Amount:</span>
+                    <input type="number" id="amount" placeholder="0.00" min="0" step="0.01" value="57.48">
+                </div>
+            </div>
+            
+            <form id="payment-form">
+                <div class="form-group">
+                    <label for="card-number">Card Number</label>
+                    <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19">
+                    <div class="error-message" id="card-number-error">Please enter a valid card number</div>
+                    <div class="card-detection" id="card-type-display"></div>
+                </div>
+                
+                <div class="card-input-group">
                     <div class="form-group">
-                        <label for="card-number">Card Number</label>
-                        <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19">
-                        <div class="error-message" id="card-number-error">Please enter a valid card number</div>
+                        <label for="expiry">Expiry Date</label>
+                        <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
+                        <div class="error-message" id="expiry-error">Please enter a valid expiry date</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cvc">Security Code (CVC)</label>
+                        <input type="text" id="cvc" placeholder="123" maxlength="4">
+                        <div class="error-message" id="cvc-error">Please enter a valid CVC</div>
+                    </div>
+                </div>
+                
+                <div class="billing-toggle">
+                    <input type="checkbox" id="billing-toggle">
+                    <label for="billing-toggle">Add billing address</label>
+                </div>
+                
+                <div class="billing-form" id="billing-form">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" placeholder="John Doe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="john.doe@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="street">Street Address</label>
+                        <input type="text" id="street" placeholder="123 Main St">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="street2">Apt, Suite, etc. (Optional)</label>
+                        <input type="text" id="street2" placeholder="Apt 456">
+                    </div>
+                    
+                    <div class="address-row">
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" id="city" placeholder="New York">
+                        </div>
                         
-                        <div class="card-types">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iIzAwN0JDNiIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiNERDExMzciIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTgxLjcgMzYuNi04MS43IDgxLjdzMzYuNiA4MS43IDgxLjcgODEuN3M4MS43LTM2LjYgODEuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="Visa">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxs="#f6f6f6" d="M445.5 0h-379C29.8 0 0 29.8 0 66.5v218c0 36.7 29.8 66.5 66.5 66.5h379c36.7 0 66.5-29.8 66.5-66.5V66.5C512 29.8 482.2 0 445.5 0z"/><path fill="#007BC6" d="M470 66.5c0 13.5-10.9 24.5-24.5 24.5H66.5C52.9 91 42 80 42 66.5S52.9 42 66.5 42h379c13.6 0 24.5 11 24.5 24.5z"/><path fill="#003D57" d="M470 284.5c0 13.5-10.9 24.5-24.5 24.5H66.5C52.9 309 42 298 42 284.5S52.9 260 66.5 260h379c13.6 0 24.5 11 24.5 24.5z"/><path fill="#F69B26" d="M242 114c-45.1 0-81.7 36.6-81.7 81.7s36.6 81.7 81.7 81.7 81.7-36.6 81.7-81.7S287.1 114 242 114zm28.3 104.2h-18.2v45.9h-20.3v-45.9h-18.2v-17.9h56.7v17.9z"/></svg>" class="card-type" alt="Mastercard">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iI0YxQzQwOCIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiNGRTM1NDUiIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTg1LjcgMzAuNi04NS43IDgxLjdzNDAuNiA4MS43IDg1LjcgODEuN3M4NS43LTMwLjYgODUuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="American Express">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iIzAwMDA5QyIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiMwMDAwOUMiIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTgxLjcgMzYuNi04MS43IDgxLjdzMzYuNiA4MS43IDg1LjcgODEuN3M4MS43LTM2LjYgODEuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNS45eiIvPjwvc3ZnPg==" class="card-type" alt="Discover">
+                        <div class="form-group">
+                            <label for="zip">ZIP / Postal Code</label>
+                            <input type="text" id="zip" placeholder="10001">
                         </div>
                     </div>
                     
-                    <div class="card-input-group">
+                    <div class="address-row">
                         <div class="form-group">
-                            <label for="expiry">Expiry Date</label>
-                            <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
-                            <div class="error-message" id="expiry-error">Please enter a valid expiry date</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="cvc">Security Code (CVC)</label>
-                            <input type="text" id="cvc" placeholder="123" maxlength="4">
-                            <div class="error-message" id="cvc-error">Please enter a valid CVC</div>
-                        </div>
-                    </div>
-                    
-                    <div class="billing-toggle">
-                        <input type="checkbox" id="billing-toggle">
-                        <label for="billing-toggle">Add billing address</label>
-                    </div>
-                    
-                    <div class="billing-form" id="billing-form">
-                        <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" placeholder="John Doe">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" placeholder="john.doe@example.com">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="street">Street Address</label>
-                            <input type="text" id="street" placeholder="123 Main St">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="street2">Apt, Suite, etc. (Optional)</label>
-                            <input type="text" id="street2" placeholder="Apt 456">
-                        </div>
-                        
-                        <div class="address-row">
-                            <div class="form-group">
-                                <label for="city">City</label>
-                                <input type="text" id="city" placeholder="New York">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="zip">ZIP / Postal Code</label>
-                                <input type="text" id="zip" placeholder="10001">
-                            </div>
-                        </div>
-                        
-                        <div class="address-row">
-                            <div class="form-group">
-                                <label for="country">Country</label>
-                                <select id="country">
-                                    <option value="US">United States</option>
-                                    <option value="CA">Canada</option>
-                                    <option value="GB">United Kingdom</option>
-                                    <option value="AU">Australia</option>
-                                     <option value="AF">Afghanistan</option>
+                            <label for="country">Country</label>
+                            <select id="country">
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                                <option value="GB">United Kingdom</option>
+                                <option value="AU">Australia</option>
+                                <option value="DE">Germany</option>
+                                <option value="FR">France</option>
+                                <option value="JP">Japan</option>
+                                 <option value="AF">Afghanistan</option>
                                 <option value="AL">Albania</option>
                                 <option value="DZ">Algeria</option>
                                 <option value="AD">Andorra</option>
@@ -654,56 +631,32 @@
                                 <option value="YE">Yemen</option>
                                 <option value="ZM">Zambia</option>
                                 <option value="ZW">Zimbabwe</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="state">State / Province</label>
-                                <input type="text" id="state" placeholder="NY">
-                            </div>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="state">State / Province</label>
+                            <input type="text" id="state" placeholder="NY">
                         </div>
                     </div>
-                    
-                    <button type="submit" id="submit-button" class="btn">
-                        Pay Now
-                    </button>
-                </form>
-            </div>
-            
-            <div class="order-summary">
-                <h2 class="section-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                </div>
+                
+                <button type="submit" id="submit-button" class="btn">
+                    Pay Now
+                </button>
+            </form>
+
+            <div style="margin-top: 30px; padding: 15px; background: var(--gray-100); border-radius: 8px;">
+                <div style="font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
                     </svg>
-                    Order Summary
-                </h2>
-                
-                <div id="order-items">
-                    <!-- Order items will be populated by JavaScript -->
+                    Secure Payment Info
                 </div>
-                
-                <div class="total">
-                    <div>Total</div>
-                    <div id="order-total">$0.00</div>
-                </div>
-                
-                <div class="processing-animation" id="processing-animation" style="display: none;">
-                    <div class="spinner"></div>
-                </div>
-                
-                <div style="margin-top: 30px; padding: 15px; background: white; border-radius: 8px;">
-                    <div style="font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                        Secure Payment Info
-                    </div>
-                    <div style="font-size: 14px; color: var(--gray-600); line-height: 1.5;">
-                        Your payment information is encrypted and processed securely. We do not store your card details.
-                    </div>
+                <div style="font-size: 14px; color: var(--gray-600); line-height: 1.5;">
+                    Your payment information is encrypted and processed securely. We do not store your card details.
                 </div>
             </div>
         </div>
@@ -741,10 +694,7 @@
     </div>
 
     <script>
-        // Fetch order summary from server on page load
-        document.addEventListener('DOMContentLoaded', async function() {
-            await fetchOrderSummary();
-            
+        document.addEventListener('DOMContentLoaded', function() {
             // Format card number with spaces
             const cardNumberInput = document.getElementById('card-number');
             cardNumberInput.addEventListener('input', function(e) {
@@ -788,135 +738,76 @@
                 e.preventDefault();
                 
                 if (validateForm()) {
-                    await processPayment();
+                    const submitButton = document.getElementById('submit-button');
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<div class="loading"></div> Processing...';
+                    
+                    // Get currency and amount
+                    const currency = document.getElementById('currency').value;
+                    const amount = document.getElementById('amount').value;
+                    
+                    // Prepare payment data
+                    const paymentData = {
+                        cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
+                        expiry: document.getElementById('expiry').value,
+                        cvc: document.getElementById('cvc').value,
+                        currency: currency,
+                        amount: parseFloat(amount),
+                        billingAddress: null
+                    };
+                    
+                    // Add billing address if enabled
+                    if (billingToggle.checked) {
+                        paymentData.billingAddress = {
+                            name: document.getElementById('name').value,
+                            email: document.getElementById('email').value,
+                            street: document.getElementById('street').value,
+                            street2: document.getElementById('street2').value,
+                            city: document.getElementById('city').value,
+                            zip: document.getElementById('zip').value,
+                            country: document.getElementById('country').value,
+                            state: document.getElementById('state').value
+                        };
+                    }
+                    
+                    // Simulate payment processing
+                    setTimeout(() => {
+                        // 80% chance of success
+                        if (Math.random() > 0.2) {
+                            showSuccess(`Your payment of ${getCurrencySymbol(currency)}${amount} has been processed successfully.`);
+                        } else {
+                            showError('Payment Failed', 'Your card was declined. Please check your card details and try again.');
+                        }
+                        
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = 'Pay Now';
+                    }, 2000);
                 }
             });
         });
         
-        // Fetch order summary from server
-        async function fetchOrderSummary() {
-            try {
-                // Replace with your actual API endpoint
-                const response = await fetch('/api/order-summary', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch order summary');
-                }
-                
-                const orderData = await response.json();
-                updateOrderSummary(orderData);
-            } catch (error) {
-                console.error('Error fetching order summary:', error);
-                // Fallback to default order summary
-                updateOrderSummary({
-                    items: [
-                        { name: 'Premium Subscription', price: 49.99 },
-                        { name: 'Tax', price: 4.50 },
-                        { name: 'Service Fee', price: 2.99 }
-                    ],
-                    total: 57.48
-                });
-            }
-        }
-        
-        // Update order summary UI
-        function updateOrderSummary(orderData) {
-            const orderItemsContainer = document.getElementById('order-items');
-            const orderTotalElement = document.getElementById('order-total');
-            
-            // Clear existing items
-            orderItemsContainer.innerHTML = '';
-            
-            // Add items to the summary
-            orderData.items.forEach(item => {
-                const itemElement = document.createElement('div');
-                itemElement.className = 'product-item';
-                itemElement.innerHTML = `
-                    <div>${item.name}</div>
-                    <div>$${item.price.toFixed(2)}</div>
-                `;
-                orderItemsContainer.appendChild(itemElement);
-            });
-            
-            // Update total
-            orderTotalElement.textContent = `$${orderData.total.toFixed(2)}`;
-        }
-        
-        // Process payment by sending data to server
-        async function processPayment() {
-            const submitButton = document.getElementById('submit-button');
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<div class="loading"></div> Processing...';
-            
-            document.getElementById('processing-animation').style.display = 'flex';
-            
-            try {
-                // Prepare payment data
-                const paymentData = {
-                    cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
-                    expiry: document.getElementById('expiry').value,
-                    cvc: document.getElementById('cvc').value,
-                    billingAddress: null
-                };
-                
-                // Add billing address if enabled
-                const billingToggle = document.getElementById('billing-toggle');
-                if (billingToggle.checked) {
-                    paymentData.billingAddress = {
-                        name: document.getElementById('name').value,
-                        email: document.getElementById('email').value,
-                        street: document.getElementById('street').value,
-                        street2: document.getElementById('street2').value,
-                        city: document.getElementById('city').value,
-                        zip: document.getElementById('zip').value,
-                        country: document.getElementById('country').value,
-                        state: document.getElementById('state').value
-                    };
-                }
-                
-                // Replace with your actual API endpoint
-                const response = await fetch('/api/process-payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(paymentData)
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    showSuccess(result.message || 'Payment processed successfully');
-                } else {
-                    showError('Payment Failed', result.message || 'There was an issue processing your payment');
-                }
-            } catch (error) {
-                console.error('Payment processing error:', error);
-                showError('Payment Error', 'An unexpected error occurred. Please try again.');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.innerHTML = 'Pay Now';
-                document.getElementById('processing-animation').style.display = 'none';
-            }
-        }
-        
         function detectCardType(cardNumber) {
-            const cardTypes = document.querySelectorAll('.card-type');
-            cardTypes.forEach(card => card.classList.remove('active'));
+            const cardTypeDisplay = document.getElementById('card-type-display');
+            
+            if (!cardNumber || cardNumber.length < 2) {
+                cardTypeDisplay.textContent = '';
+                return;
+            }
             
             if (/^4/.test(cardNumber)) {
-                document.querySelector('.card-type[alt="Visa"]').classList.add('active');
+                cardTypeDisplay.textContent = 'Visa';
+                cardTypeDisplay.style.color = '#1a1f71';
             } else if (/^5[1-5]/.test(cardNumber)) {
-                document.querySelector('.card-type[alt="Mastercard"]').classList.add('active');
+                cardTypeDisplay.textContent = 'Mastercard';
+                cardTypeDisplay.style.color = '#eb001b';
             } else if (/^3[47]/.test(cardNumber)) {
-                document.querySelector('.card-type[alt="American Express"]').classList.add('active');
+                cardTypeDisplay.textContent = 'American Express';
+                cardTypeDisplay.style.color = '#006fcf';
             } else if (/^6(?:011|5)/.test(cardNumber)) {
-                document.querySelector('.card-type[alt="Discover"]').classList.add('active');
+                cardTypeDisplay.textContent = 'Discover';
+                cardTypeDisplay.style.color = '#ff6000';
+            } else {
+                cardTypeDisplay.textContent = '';
             }
         }
         
@@ -954,6 +845,15 @@
                 isValid = false;
             } else {
                 hideErrorField('cvc', 'cvc-error');
+            }
+            
+            // Validate amount
+            const amount = document.getElementById('amount').value;
+            if (!amount || parseFloat(amount) <= 0) {
+                showErrorField('amount', 'amount-error');
+                isValid = false;
+            } else {
+                hideErrorField('amount', 'amount-error');
             }
             
             // Validate billing address if enabled
@@ -1011,6 +911,18 @@
         
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function getCurrencySymbol(currencyCode) {
+            const symbols = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥',
+                'CAD': 'C$',
+                'AUD': 'A$'
+            };
+            return symbols[currencyCode] || currencyCode;
         }
         
         // Luhn algorithm for card number validation
