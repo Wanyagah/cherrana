@@ -4,7 +4,6 @@ const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
 const cors = require('cors');
-const sanitizeHtml = require('sanitize-html');
 const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 
@@ -31,6 +30,8 @@ const logger = winston.createLogger({
     })
   ]
 });
+
+// ... rest of your server code remains the same, just remove sanitize-html references ...;
 
 // Configure CORS
 const allowedOrigins = process.env.CORS_ORIGINS 
