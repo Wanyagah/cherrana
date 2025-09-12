@@ -162,11 +162,6 @@
             flex: 1;
         }
         
-        .card-icon {
-            height: 24px;
-            margin-top: 30px;
-        }
-        
         .billing-toggle {
             display: flex;
             align-items: center;
@@ -284,6 +279,12 @@
             margin-bottom: 20px;
         }
         
+        .processing-icon {
+            font-size: 60px;
+            color: var(--warning);
+            margin-bottom: 20px;
+        }
+        
         .status-message {
             font-size: 22px;
             margin-bottom: 20px;
@@ -361,6 +362,33 @@
             border-top: 1px solid var(--gray-200);
             background: var(--gray-100);
         }
+
+        .payment-status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+        
+        .payment-status.processing {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+        
+        .payment-status.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        
+        .payment-status.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
     </style>
 </head>
 <body>
@@ -391,77 +419,80 @@
                     Payment Details
                 </h2>
                 
+                <!-- Payment Status Indicator -->
+                <div id="payment-status" class="payment-status"></div>
+                
                 <form id="payment-form">
                     <div class="form-group">
                         <label for="card-number">Card Number</label>
-                        <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19">
+                        <input type="text" id="card-number" name="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
                         <div class="error-message" id="card-number-error">Please enter a valid card number</div>
                         
                         <div class="card-types">
                             <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iIzAwN0JDNiIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiNERDExMzciIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTgxLjcgMzYuNi04MS43IDgxLjdzMzYuNiA4MS43IDgxLjcgODEuN3M4MS43LTM2LjYgODEuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="Visa">
                             <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iIzAwNEE4NSIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiMwMDNENTciIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTgxLjcgMzYuNi04MS43IDgxLjdzMzYuNiA4MS43IDgxLjcgODEuN3M4MS43LTM2LjYgODEuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="Mastercard">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iI0YxQzQwOCIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiNGRTM1NDUiIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTg1LjcgMzAuNi04NS43IDgxLjdzNDAuNiA4MS43IDg1LjcgODEuN3M4NS43LTMwLjYgODUuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="American Express">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iIzAwMDA5QyIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiMwMDAwOUMiIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTgxLjcgMzYuNi04MS43IDgxLjdzMzYuNiA4MS43IDgxLjcgODEuN3M4MS43LTM2LjYgODEuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNS45eiIvPjwvc3ZnPg==" class="card-type" alt="Discover">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iI0YxQzQwOCIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiNGRTM1NDUiIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA4Mi0yOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTg1LjcgMzAuNi04NS43IDgxLjdzNDAuNiA4MS43IDg1LjcgODEuN3M4NS43LTMwLjYgODUuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="American Express">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgMzUxIj48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNDQ1LjUgMGgtMzc5QzI5LjggMCAwIDI5LjggMCA2Ni41djIxOGMwIDM2LjcgMjkuOCA2Ni41IDY2LjUgNjYuNWgzNzljMzYuNyAwIDY2LjUtMjkuOCA2Ni41LTY2LjVWNjYuNUM1MTIgMjkuOCA0ODIuMiAwIDQ0NS41IDB6Ii8+PHBhdGggZmlsbD0iIzAwMDA5QyIgZD0iTTQ3MCA2Ni41YzAgMTMuNS0xMC45IDI0LjUtMjQuNSAyNC41SDY2LjVDNTIuOSA5MSA0MiA4MCA0MiA2Ni41UzUyLjkgNDIgNjYuNSA0MmgzNzljMTMuNiAwIDI0LjUgMTEgMjQuNSAyNC41eiIvPjxwYXRoIGZpbGw9IiMwMDAwOUMiIGQ9Ik00NzAgMjg0LjVjMCAxMy41LTEwLjkgMjQuNS0yNC41IDI0LjVINjYuNUM1Mi45IDMwOSA0MiAyOTggNDIgMjg0LjVTNTIuOSAyNjAgNjYuNSAyNjBoMzc5YzEzLjYgMCAyNC41IDExIDI0LjUgMjQuNXoiLz48cGF0aCBmaWxsPSIjRjY5QjI2IiBkPSJNMjQyIDExNGMtNDUuMSAwLTgxLjcgMzYuNi04MS43IDgxLjdzMzYuNiA4MS43IDgxLjcgODEuN3M4MS43LTM2LjYgODEuNy04MS43UzI4Ny4xIDExNCAyNDIgMTE0em0yOC4zIDEwNC4yaC0xOC4ydjQ1LjloLTIwLjN2LTQ1LjloLTE4LjJ2LTE3LjloNTYuN3YxNy45eiIvPjwvc3ZnPg==" class="card-type" alt="Discover">
                         </div>
                     </div>
                     
                     <div class="card-input-group">
                         <div class="form-group">
                             <label for="expiry">Expiry Date</label>
-                            <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
+                            <input type="text" id="expiry" name="expiry" placeholder="MM/YY" maxlength="5" required>
                             <div class="error-message" id="expiry-error">Please enter a valid expiry date</div>
                         </div>
                         
                         <div class="form-group">
                             <label for="cvc">Security Code (CVC)</label>
-                            <input type="text" id="cvc" placeholder="123" maxlength="4">
+                            <input type="text" id="cvc" name="cvc" placeholder="123" maxlength="4" required>
                             <div class="error-message" id="cvc-error">Please enter a valid CVC</div>
                         </div>
                     </div>
                     
                     <div class="billing-toggle">
-                        <input type="checkbox" id="billing-toggle">
+                        <input type="checkbox" id="billing-toggle" checked>
                         <label for="billing-toggle">Add billing address</label>
                     </div>
                     
-                    <div class="billing-form" id="billing-form">
+                    <div class="billing-form" id="billing-form" style="display: block;">
                         <div class="form-group">
                             <label for="name">Full Name</label>
-                            <input type="text" id="name" placeholder="John Doe">
+                            <input type="text" id="name" name="name" placeholder="John Doe" required>
                         </div>
                         
                         <div class="form-group">
                             <label for="email">Email</label>
-                            <input type="email" id="email" placeholder="john.doe@example.com">
+                            <input type="email" id="email" name="email" placeholder="john.doe@example.com" required>
                         </div>
                         
                         <div class="form-group">
                             <label for="street">Street Address</label>
-                            <input type="text" id="street" placeholder="123 Main St">
+                            <input type="text" id="street" name="street" placeholder="123 Main St" required>
                         </div>
                         
                         <div class="form-group">
                             <label for="street2">Apt, Suite, etc. (Optional)</label>
-                            <input type="text" id="street2" placeholder="Apt 456">
+                            <input type="text" id="street2" name="street2" placeholder="Apt 456">
                         </div>
                         
                         <div class="address-row">
                             <div class="form-group">
                                 <label for="city">City</label>
-                                <input type="text" id="city" placeholder="New York">
+                                <input type="text" id="city" name="city" placeholder="New York" required>
                             </div>
                             
                             <div class="form-group">
                                 <label for="zip">ZIP / Postal Code</label>
-                                <input type="text" id="zip" placeholder="10001">
+                                <input type="text" id="zip" name="zip" placeholder="10001" required>
                             </div>
                         </div>
                         
                         <div class="address-row">
                             <div class="form-group">
                                 <label for="country">Country</label>
-                                <select id="country">
-<option value="US">United States</option>
+                                <select id="country" name="country" required>
+                                    <option value="US">United States</option>
                                 <option value="CA">Canada</option>
                                 <option value="GB">United Kingdom</option>
                                 <option value="AU">Australia</option>
@@ -660,7 +691,7 @@
                             
                             <div class="form-group">
                                 <label for="state">State / Province</label>
-                                <input type="text" id="state" placeholder="NY">
+                                <input type="text" id="state" name="state" placeholder="NY" required>
                             </div>
                         </div>
                     </div>
@@ -725,12 +756,26 @@
         </footer>
     </div>
     
+    <!-- Processing Modal -->
+    <div class="modal" id="processing-modal">
+        <div class="modal-content">
+            <div class="processing-animation">
+                <div class="spinner"></div>
+            </div>
+            <div class="processing-icon">⏳</div>
+            <div class="status-message">Processing Payment...</div>
+            <div class="status-details">
+                Please wait while we securely process your payment. Do not refresh or close this window.
+            </div>
+        </div>
+    </div>
+    
     <div class="modal" id="success-modal">
         <div class="modal-content">
             <div class="success-icon">✅</div>
             <div class="status-message">Payment Successful!</div>
-            <div class="status-details">
-                Your payment of $57.48 has been processed successfully. A confirmation email has been sent to your email address.
+            <div class="status-details" id="success-details">
+                Your payment has been processed successfully. A confirmation email has been sent to your email address.
             </div>
             <div class="action-buttons">
                 <button class="btn-primary" onclick="window.location.reload()">Done</button>
@@ -753,17 +798,33 @@
     </div>
 
     <script>
+        // Configuration
+        const CONFIG = {
+            API_BASE_URL: window.location.origin,
+            RETRY_ATTEMPTS: 3,
+            RETRY_DELAY: 2000,
+            POLLING_INTERVAL: 1000,
+            MAX_POLLING_TIME: 30000 // 30 seconds
+        };
+
+        let currentPaymentIntentId = null;
+        let pollingInterval = null;
+        let paymentStartTime = null;
+
         document.addEventListener('DOMContentLoaded', function() {
+            initializeForm();
+        });
+
+        function initializeForm() {
             // Format card number with spaces
             const cardNumberInput = document.getElementById('card-number');
             cardNumberInput.addEventListener('input', function(e) {
                 let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                if (value.length > 16) value = value.substring(0, 16);
                 if (value) {
                     value = value.match(new RegExp('.{1,4}', 'g')).join(' ');
                 }
                 e.target.value = value;
-                
-                // Detect card type
                 detectCardType(value.replace(/\s/g, ''));
             });
             
@@ -771,8 +832,9 @@
             const expiryInput = document.getElementById('expiry');
             expiryInput.addEventListener('input', function(e) {
                 let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 4) value = value.substring(0, 4);
                 if (value.length > 2) {
-                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                    value = value.substring(0, 2) + '/' + value.substring(2);
                 }
                 e.target.value = value;
             });
@@ -780,7 +842,11 @@
             // Only allow numbers for CVC
             const cvcInput = document.getElementById('cvc');
             cvcInput.addEventListener('input', function(e) {
-                e.target.value = e.target.value.replace(/\D/g, '');
+                let value = e.target.value.replace(/\D/g, '');
+                const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+                const maxLength = isAmex(cardNumber) ? 4 : 3;
+                if (value.length > maxLength) value = value.substring(0, maxLength);
+                e.target.value = value;
             });
             
             // Toggle billing address form
@@ -789,58 +855,235 @@
             
             billingToggle.addEventListener('change', function() {
                 billingForm.style.display = this.checked ? 'block' : 'none';
+                toggleRequiredFields(this.checked);
             });
             
             // Handle form submission
             const paymentForm = document.getElementById('payment-form');
-            paymentForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                if (validateForm()) {
-                    const submitButton = document.getElementById('submit-button');
-                    submitButton.disabled = true;
-                    submitButton.innerHTML = '<div class="loading"></div> Processing...';
-                    
-                    document.getElementById('processing-animation').style.display = 'flex';
-                    
-                    // Simulate payment processing
-                    setTimeout(() => {
-                        // 80% chance of success
-                        if (Math.random() > 0.2) {
-                            showSuccess();
-                        } else {
-                            showError('Payment Failed', 'Your card was declined. Please check your card details and try again.');
-                        }
-                        
-                        submitButton.disabled = false;
-                        submitButton.innerHTML = 'Pay Now';
-                        document.getElementById('processing-animation').style.display = 'none';
-                    }, 2000);
-                }
-            });
-        });
-        
-        function detectCardType(cardNumber) {
-            const cardTypes = document.querySelectorAll('.card-type');
-            cardTypes.forEach(card => card.classList.remove('active'));
+            paymentForm.addEventListener('submit', handlePaymentSubmit);
+
+            // Check for any existing payment on page load
+            checkServerStatus();
+        }
+
+        async function handlePaymentSubmit(e) {
+            e.preventDefault();
             
-            if (/^4/.test(cardNumber)) {
-                document.querySelector('.card-type[alt="Visa"]').classList.add('active');
-            } else if (/^5[1-5]/.test(cardNumber)) {
-                document.querySelector('.card-type[alt="Mastercard"]').classList.add('active');
-            } else if (/^3[47]/.test(cardNumber)) {
-                document.querySelector('.card-type[alt="American Express"]').classList.add('active');
-            } else if (/^6(?:011|5)/.test(cardNumber)) {
-                document.querySelector('.card-type[alt="Discover"]').classList.add('active');
+            if (!validateForm()) return;
+
+            const formData = getFormData();
+            await processPayment(formData);
+        }
+
+        function getFormData() {
+            const billingEnabled = document.getElementById('billing-toggle').checked;
+            
+            return {
+                cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
+                expiry: document.getElementById('expiry').value,
+                cvc: document.getElementById('cvc').value,
+                amount: 57.48,
+                currency: 'usd',
+                billing_address: billingEnabled ? {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    street: document.getElementById('street').value,
+                    street2: document.getElementById('street2').value,
+                    city: document.getElementById('city').value,
+                    state: document.getElementById('state').value,
+                    zip: document.getElementById('zip').value,
+                    country: document.getElementById('country').value
+                } : null
+            };
+        }
+
+        async function processPayment(formData) {
+            updatePaymentStatus('processing', 'Creating payment intent...');
+            disableForm(true);
+            showModal('processing-modal');
+            paymentStartTime = Date.now();
+
+            try {
+                // Step 1: Create payment intent
+                const paymentIntent = await createPaymentIntent(formData.amount, formData.currency);
+                currentPaymentIntentId = paymentIntent.paymentIntentId;
+                
+                updatePaymentStatus('processing', 'Confirming payment...');
+                
+                // Step 2: Confirm payment
+                const confirmation = await confirmPayment({
+                    paymentIntentId: paymentIntent.paymentIntentId,
+                    cardNumber: formData.cardNumber,
+                    expiry: formData.expiry,
+                    cvc: formData.cvc,
+                    pin: '1234', // You might want to add a PIN field
+                    billing_address: formData.billing_address
+                });
+
+                // Step 3: Handle confirmation result
+                await handlePaymentConfirmation(confirmation);
+
+            } catch (error) {
+                console.error('Payment processing error:', error);
+                handlePaymentError(error);
             }
         }
-        
+
+        async function createPaymentIntent(amount, currency) {
+            const response = await fetchWithRetry('/create-payment-intent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ amount, currency })
+            });
+
+            if (!response.success) {
+                throw new Error(response.error || 'Failed to create payment intent');
+            }
+
+            return response;
+        }
+
+        async function confirmPayment(paymentData) {
+            const response = await fetchWithRetry('/confirm-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(paymentData)
+            });
+
+            if (!response.success) {
+                throw new Error(response.error || 'Failed to confirm payment');
+            }
+
+            return response;
+        }
+
+        async function handlePaymentConfirmation(confirmation) {
+            switch (confirmation.status) {
+                case 'succeeded':
+                    handlePaymentSuccess(confirmation);
+                    break;
+                    
+                case 'requires_action':
+                    updatePaymentStatus('processing', 'Additional authentication required...');
+                    // Handle 3D Secure or other authentication
+                    await handle3DSecure(confirmation.clientSecret);
+                    break;
+                    
+                case 'processing':
+                    updatePaymentStatus('processing', 'Payment is being processed...');
+                    startPaymentPolling(confirmation.paymentIntentId);
+                    break;
+                    
+                default:
+                    throw new Error(`Unexpected payment status: ${confirmation.status}`);
+            }
+        }
+
+        function handlePaymentSuccess(paymentData) {
+            clearPolling();
+            hideModal('processing-modal');
+            updatePaymentStatus('success', 'Payment completed successfully!');
+            
+            const successDetails = document.getElementById('success-details');
+            successDetails.innerHTML = `
+                Your payment of $57.48 has been processed successfully.<br>
+                Transaction ID: ${paymentData.paymentIntentId || 'N/A'}<br>
+                A confirmation email has been sent to your email address.
+            `;
+            
+            showModal('success-modal');
+            disableForm(false);
+        }
+
+        function handlePaymentError(error) {
+            clearPolling();
+            hideModal('processing-modal');
+            updatePaymentStatus('error', error.message || 'Payment failed');
+            
+            document.getElementById('error-title').textContent = 'Payment Failed';
+            document.getElementById('error-details').textContent = 
+                error.message || 'There was an issue processing your payment. Please check your card details and try again.';
+            
+            showModal('error-modal');
+            disableForm(false);
+        }
+
+        function startPaymentPolling(paymentIntentId) {
+            let pollStartTime = Date.now();
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    const elapsed = Date.now() - pollStartTime;
+                    
+                    if (elapsed > CONFIG.MAX_POLLING_TIME) {
+                        clearPolling();
+                        throw new Error('Payment confirmation timeout. Please check your payment status.');
+                    }
+                    
+                    const status = await checkPaymentStatus(paymentIntentId);
+                    
+                    if (status.status === 'succeeded') {
+                        handlePaymentSuccess(status);
+                    } else if (status.status === 'failed' || status.status === 'canceled') {
+                        throw new Error(status.error || 'Payment was declined or canceled');
+                    }
+                    // Continue polling for other statuses
+                    
+                } catch (error) {
+                    console.error('Polling error:', error);
+                    handlePaymentError(error);
+                }
+            }, CONFIG.POLLING_INTERVAL);
+        }
+
+        async function checkPaymentStatus(paymentIntentId) {
+            const response = await fetchWithRetry(`/payment-status/${paymentIntentId}`);
+            return response;
+        }
+
+        async function handle3DSecure(clientSecret) {
+            // This would integrate with Stripe's 3D Secure handling
+            // For now, we'll simulate the process
+            updatePaymentStatus('processing', 'Completing 3D Secure authentication...');
+            
+            setTimeout(() => {
+                // Simulate successful 3DS
+                handlePaymentSuccess({ paymentIntentId: currentPaymentIntentId });
+            }, 3000);
+        }
+
+        async function fetchWithRetry(url, options = {}, attempts = 0) {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}${url}`, {
+                    ...options,
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                if (attempts < CONFIG.RETRY_ATTEMPTS) {
+                    await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
+                    return fetchWithRetry(url, options, attempts + 1);
+                }
+                throw error;
+            }
+        }
+
         function validateForm() {
             let isValid = true;
             
-            // Validate card number (simple Luhn check)
+            // Validate card number
             const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-            if (!cardNumber || !luhnCheck(cardNumber) || cardNumber.length < 13) {
+            if (!cardNumber || !luhnCheck(cardNumber) || cardNumber.length < 13 || cardNumber.length > 19) {
                 showErrorField('card-number', 'card-number-error');
                 isValid = false;
             } else {
@@ -849,13 +1092,7 @@
             
             // Validate expiry date
             const expiry = document.getElementById('expiry').value;
-            const [month, year] = expiry.split('/');
-            const currentYear = new Date().getFullYear() % 100;
-            const currentMonth = new Date().getMonth() + 1;
-            
-            if (!expiry || !month || !year || 
-                month < 1 || month > 12 || 
-                year < currentYear || (year == currentYear && month < currentMonth)) {
+            if (!isValidExpiry(expiry)) {
                 showErrorField('expiry', 'expiry-error');
                 isValid = false;
             } else {
@@ -864,7 +1101,8 @@
             
             // Validate CVC
             const cvc = document.getElementById('cvc').value;
-            if (!cvc || cvc.length < 3 || cvc.length > 4) {
+            const expectedCvcLength = isAmex(cardNumber) ? 4 : 3;
+            if (!cvc || cvc.length !== expectedCvcLength) {
                 showErrorField('cvc', 'cvc-error');
                 isValid = false;
             } else {
@@ -874,29 +1112,74 @@
             // Validate billing address if enabled
             const billingToggle = document.getElementById('billing-toggle');
             if (billingToggle.checked) {
-                const street = document.getElementById('street').value;
-                const zip = document.getElementById('zip').value;
-                const country = document.getElementById('country').value;
-                
-                if (!street || street.length < 2) {
-                    showErrorField('street', 'street-error');
-                    isValid = false;
-                }
-                
-                if (!zip || zip.length < 3) {
-                    showErrorField('zip', 'zip-error');
-                    isValid = false;
-                }
-                
-                if (!country) {
-                    showErrorField('country', 'country-error');
-                    isValid = false;
-                }
+                const requiredFields = ['name', 'email', 'street', 'city', 'state', 'zip', 'country'];
+                requiredFields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (!field.value.trim()) {
+                        field.classList.add('input-error');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('input-error');
+                    }
+                });
             }
             
             return isValid;
         }
-        
+
+        function isValidExpiry(expiry) {
+            if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
+            
+            const [month, year] = expiry.split('/').map(Number);
+            const currentYear = new Date().getFullYear() % 100;
+            const currentMonth = new Date().getMonth() + 1;
+            
+            return month >= 1 && month <= 12 && 
+                   (year > currentYear || (year === currentYear && month >= currentMonth));
+        }
+
+        function isAmex(cardNumber) {
+            return /^3[47]/.test(cardNumber);
+        }
+
+        function detectCardType(cardNumber) {
+            const cardTypes = document.querySelectorAll('.card-type');
+            cardTypes.forEach(card => card.classList.remove('active'));
+            
+            if (/^4/.test(cardNumber)) {
+                document.querySelector('.card-type[alt="Visa"]')?.classList.add('active');
+            } else if (/^5[1-5]/.test(cardNumber)) {
+                document.querySelector('.card-type[alt="Mastercard"]')?.classList.add('active');
+            } else if (/^3[47]/.test(cardNumber)) {
+                document.querySelector('.card-type[alt="American Express"]')?.classList.add('active');
+            } else if (/^6(?:011|5)/.test(cardNumber)) {
+                document.querySelector('.card-type[alt="Discover"]')?.classList.add('active');
+            }
+        }
+
+        function updatePaymentStatus(type, message) {
+            const statusElement = document.getElementById('payment-status');
+            statusElement.className = `payment-status ${type}`;
+            statusElement.textContent = message;
+            statusElement.style.display = 'block';
+        }
+
+        function disableForm(disabled) {
+            const form = document.getElementById('payment-form');
+            const inputs = form.querySelectorAll('input, select, button');
+            inputs.forEach(input => {
+                input.disabled = disabled;
+            });
+        }
+
+        function toggleRequiredFields(required) {
+            const billingFields = ['name', 'email', 'street', 'city', 'state', 'zip', 'country'];
+            billingFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                field.required = required;
+            });
+        }
+
         function showErrorField(inputId, errorId) {
             document.getElementById(inputId).classList.add('input-error');
             const errorElement = document.getElementById(errorId);
@@ -913,18 +1196,34 @@
             }
         }
         
-        function showSuccess() {
-            document.getElementById('success-modal').style.display = 'flex';
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
         }
         
-        function showError(title, message) {
-            document.getElementById('error-title').textContent = title;
-            document.getElementById('error-details').textContent = message;
-            document.getElementById('error-modal').style.display = 'flex';
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
         }
         
         function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+            hideModal(modalId);
+        }
+
+        function clearPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/health`);
+                if (!response.ok) {
+                    updatePaymentStatus('error', 'Server connection failed. Please refresh the page.');
+                }
+            } catch (error) {
+                updatePaymentStatus('error', 'Unable to connect to payment server. Please check your connection.');
+            }
         }
         
         // Luhn algorithm for card number validation
@@ -948,6 +1247,9 @@
             
             return (sum % 10) === 0;
         }
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', clearPolling);
     </script>
 </body>
 </html>
