@@ -469,9 +469,56 @@ app.post('/confirm-payment', async (req, res) => {
       cardNumber, 
       expiry, 
       cvc, 
-      pin,
       billing_address 
     } = req.body;
+
+    // Parse expiry
+    const [expMonth, expYear] = expiry.split('/').map(part => 
+      parseInt(part.trim()) + (part.length === 2 && parseInt(part) < 50 ? 2000 : 1900)
+    );
+
+    // Create payment method
+    const paymentMethod = await stripe.paymentMethods.create({
+      type: 'card',
+      card: {
+        number: cardNumber,
+        exp_month: expMonth,
+        exp_year: expYear,
+        cvc: cvc
+      },
+      billing_details: billing_address ? {
+        name: billing_address.name,
+        email: billing_address.email,
+        address: {
+          line1: billing_address.street,
+          city: billing_address.city,
+          state: billing_address.state,
+          postal_code: billing_address.zip,
+          country: billing_address.country
+        }
+      } : undefined
+    });
+
+    // Confirm payment intent
+    const paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
+      payment_method: paymentMethod.id,
+      return_url: `${process.env.DOMAIN || 'http://localhost:3000'}/success`
+    });
+
+    res.json({
+      success: true,
+      status: paymentIntent.status,
+      paymentIntentId: paymentIntent.id,
+      clientSecret: paymentIntent.client_secret
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+      code: error.code
+    });
+  }
+});
 
     // Validate required fields
     if (!paymentIntentId || !cardNumber || !expiry || !cvc || !pin) {
